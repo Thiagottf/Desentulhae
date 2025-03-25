@@ -1,6 +1,6 @@
 # Desentulhaê
 
-Desentulhaê é uma plataforma web inspirada no OLX para a publicação e busca de anúncios de entulho. A aplicação permite que usuários se cadastrem, façam login, publiquem anúncios com fotos, localização (via GPS e geocodificação reversa), preço e outras informações. Os usuários também podem visualizar detalhes dos anúncios, iniciar um chat com o anunciante, salvar anúncios para visualização futura e gerenciar seus anúncios em um painel.
+Desentulhaê é uma plataforma web para a publicação e busca de anúncios de entulho. A aplicação permite que usuários se cadastrem, façam login, publiquem anúncios com fotos, localização (via GPS e geocodificação reversa), preço e outras informações. Os usuários também podem visualizar detalhes dos anúncios, iniciar um chat com o anunciante, salvar anúncios para visualização futura e gerenciar seus anúncios em um painel.
 
 ## Funcionalidades
 
