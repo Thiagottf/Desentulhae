@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useNavigate } from "react-router-dom"; // Importa useNavigate
 
-// Configurar ícones padrão do Leaflet para que os pins apareçam corretamente
+// Configurando os ícones padrão do Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -15,63 +15,54 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-const MapaInterativo = () => {
-  const [userPosition, setUserPosition] = useState([-23.55052, -46.633308]); // Posição default (São Paulo)
-  const [posts, setPosts] = useState([]);
+const MapaReportados = () => {
+  const [reports, setReports] = useState([]);
+  const [mapCenter, setMapCenter] = useState([-3.119, -60.0217]); // Centro padrão, ajuste conforme necessário
   const navigate = useNavigate(); // Inicializa o hook useNavigate
 
   useEffect(() => {
-    // Tenta obter a localização do usuário para centralizar o mapa
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserPosition([
-            position.coords.latitude,
-            position.coords.longitude,
-          ]);
-        },
-        (error) => {
-          console.error("Erro ao obter localização:", error);
-        }
-      );
+    const storedReports = JSON.parse(localStorage.getItem("reportedEntulhos")) || [];
+    setReports(storedReports);
+    // Centraliza o mapa na média dos pontos, se houver
+    if (storedReports.length > 0) {
+      const latitudes = storedReports.map(r => r.latitude).filter(lat => lat !== null);
+      const longitudes = storedReports.map(r => r.longitude).filter(lng => lng !== null);
+      if (latitudes.length > 0 && longitudes.length > 0) {
+        const avgLat = latitudes.reduce((sum, lat) => sum + lat, 0) / latitudes.length;
+        const avgLng = longitudes.reduce((sum, lng) => sum + lng, 0) / longitudes.length;
+        setMapCenter([avgLat, avgLng]);
+      }
     }
-    // Recupera os anúncios (publicados) do localStorage
-    const postsData = JSON.parse(localStorage.getItem("posts")) || [];
-    setPosts(postsData);
   }, []);
 
   return (
     <div className="min-h-screen p-4">
       <h1 className="text-3xl font-bold text-green-800 mb-4 text-center">
-        Mapa Interativo dos Anúncios
+        Mapa de Entulhos Reportados
       </h1>
       <div className="flex justify-center mb-4">
         <button
-          onClick={() => navigate("/mapa-reportados")}
+          onClick={() => navigate("/mapa")}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
         >
-          Ver Mapas Reportados
+          Voltar ao Mapa de Anúncios
         </button>
       </div>
-      <MapContainer
-        center={userPosition}
-        zoom={13}
-        style={{ height: "500px", width: "100%" }}
-      >
+      <MapContainer center={mapCenter} zoom={12} style={{ height: "500px", width: "100%" }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {posts.map((post) => {
-          if (post.latitude && post.longitude) {
+        {reports.map((report) => {
+          if (report.latitude && report.longitude) {
             return (
-              <Marker key={post.id} position={[post.latitude, post.longitude]}>
+              <Marker key={report.id} position={[report.latitude, report.longitude]}>
                 <Popup>
-                  <strong>{post.titulo}</strong>
+                  <strong>{report.descricao}</strong>
                   <br />
-                  {post.localizacao}
+                  <small>{report.localizacao}</small>
                   <br />
-                  <a href={`/detalhes/${post.id}`}>Ver detalhes</a>
+                  <small>{new Date(report.dataReport).toLocaleString()}</small>
                 </Popup>
               </Marker>
             );
@@ -83,4 +74,4 @@ const MapaInterativo = () => {
   );
 };
 
-export default MapaInterativo;
+export default MapaReportados;

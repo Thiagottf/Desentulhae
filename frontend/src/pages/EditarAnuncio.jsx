@@ -10,7 +10,13 @@ const [form, setForm] = useState({
     localizacao: "",
     contato: "",
     categoria: "",
-    imagens: []
+    preco: "",
+    volume: "",
+    detalhesTipo: "",
+    transacao: "",
+    imagens: [],
+    latitude: null,
+    longitude: null
 })
 
 useEffect(() => {
@@ -18,7 +24,7 @@ useEffect(() => {
     const anuncio = posts.find(post => post.id === Number(id))
     if (!anuncio) {
     alert("Anúncio não encontrado.")
-    navigate("/painel")
+    navigate("/painelusuario")
     } else {
     setForm(anuncio)
     }
@@ -31,14 +37,15 @@ const handleChange = (e) => {
 
 const handleFileChange = (e) => {
     const files = Array.from(e.target.files)
-    // Se o usuário escolher novos arquivos, atualizamos as imagens
     if (files.length > 0) {
-    const promises = files.map(file => new Promise((resolve, reject) => {
+    const promises = files.map(file =>
+        new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.onloadend = () => resolve(reader.result)
         reader.onerror = () => reject("Erro ao ler o arquivo")
         reader.readAsDataURL(file)
-    }))
+        })
+    )
     Promise.all(promises)
         .then(results => {
         setForm(prev => ({ ...prev, imagens: results }))
@@ -60,7 +67,7 @@ const handleSubmit = (e) => {
     })
     localStorage.setItem("posts", JSON.stringify(updatedPosts))
     alert("Anúncio atualizado com sucesso!")
-    navigate("/painel")
+    navigate("/painelusuario")
 }
 
 const handleDelete = () => {
@@ -69,7 +76,7 @@ const handleDelete = () => {
     const updatedPosts = posts.filter(post => post.id !== Number(id))
     localStorage.setItem("posts", JSON.stringify(updatedPosts))
     alert("Anúncio excluído com sucesso!")
-    navigate("/painel")
+    navigate("/painelusuario")
     }
 }
 
@@ -96,6 +103,7 @@ return (
             className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
             />
         </div>
+        
         <div className="mb-4">
             <label className="block mb-1">Descrição</label>
             <textarea
@@ -108,6 +116,65 @@ return (
             rows="4"
             />
         </div>
+        
+          {/* Campo Preço */}
+        <div className="mb-4">
+            <label className="block mb-1">Preço</label>
+            <input
+            type="text"
+            name="preco"
+            value={form.preco}
+            onChange={handleChange}
+            required
+            placeholder="Ex: R$ 100"
+            className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
+            />
+        </div>
+
+          {/* Campo Volume */}
+        <div className="mb-4">
+            <label className="block mb-1">Volume (ex: 5 m³)</label>
+            <input
+            type="text"
+            name="volume"
+            value={form.volume}
+            onChange={handleChange}
+            required
+            placeholder="Digite o volume do entulho"
+            className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
+            />
+        </div>
+
+          {/* Campo Detalhes do Tipo */}
+        <div className="mb-4">
+            <label className="block mb-1">Detalhes do Tipo</label>
+            <textarea
+            name="detalhesTipo"
+            value={form.detalhesTipo}
+            onChange={handleChange}
+            required
+            placeholder="Ex: Reaproveitável, para reciclagem, etc."
+            className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
+            rows="3"
+            />
+        </div>
+
+          {/* Campo Tipo de Transação */}
+        <div className="mb-4">
+            <label className="block mb-1">Tipo de Transação</label>
+            <select
+            name="transacao"
+            value={form.transacao}
+            onChange={handleChange}
+            required
+            className="w-full p-3 rounded-lg bg-transparent border border-white/30 text-black focus:outline-none"
+            >
+            <option value="">Selecione o tipo de transação</option>
+            <option value="venda">Venda</option>
+            <option value="doacao">Doação</option>
+            </select>
+        </div>
+        
         <div className="mb-4">
             <label className="block mb-1">Localização</label>
             <input
@@ -120,6 +187,7 @@ return (
             className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
             />
         </div>
+        
         <div className="mb-4">
             <label className="block mb-1">Contato (Telefone/WhatsApp)</label>
             <input
@@ -132,6 +200,7 @@ return (
             className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
             />
         </div>
+        
         <div className="mb-4">
             <label className="block mb-1">Tipo de Entulho</label>
             <select
@@ -148,6 +217,7 @@ return (
             <option value="D">Classe D - Resíduos perigosos (tintas, solventes, óleos, etc.)</option>
             </select>
         </div>
+        
         <div className="mb-4">
             <label className="block mb-1">Imagens (mínimo 4)</label>
             <input
@@ -158,6 +228,7 @@ return (
             className="w-full p-2 bg-transparent border border-white/30 text-white focus:outline-none"
             />
         </div>
+        
         <div className="flex justify-between">
             <button
             type="button"

@@ -9,8 +9,11 @@ const PublicarEntulho = () => {
     localizacao: "",
     contato: "",
     categoria: "",
-    preco: "",            // <--- NOVO CAMPO
-    imagens: [], 
+    preco: "",
+    volume: "",
+    detalhesTipo: "",
+    transacao: "",       // Novo campo: Venda ou Doação
+    imagens: [],
     latitude: null,
     longitude: null
   })
@@ -139,7 +142,7 @@ const PublicarEntulho = () => {
             />
           </div>
 
-          {/* CAMPO PREÇO */}
+          {/* Campo Preço */}
           <div className="mb-4">
             <label className="block mb-1">Preço</label>
             <input
@@ -150,6 +153,34 @@ const PublicarEntulho = () => {
               required
               placeholder="Ex: R$ 100"
               className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
+            />
+          </div>
+
+          {/* Campo Volume */}
+          <div className="mb-4">
+            <label className="block mb-1">Volume (ex: 5 m³)</label>
+            <input
+              type="text"
+              name="volume"
+              value={form.volume}
+              onChange={handleChange}
+              required
+              placeholder="Digite o volume do entulho"
+              className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
+            />
+          </div>
+
+          {/* Campo Detalhes do Tipo */}
+          <div className="mb-4">
+            <label className="block mb-1">Detalhes do Tipo</label>
+            <textarea
+              name="detalhesTipo"
+              value={form.detalhesTipo}
+              onChange={handleChange}
+              required
+              placeholder="Ex: Reaproveitável, para reciclagem, etc."
+              className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
+              rows="3"
             />
           </div>
           
@@ -164,7 +195,6 @@ const PublicarEntulho = () => {
               placeholder="Digite a localização ou use o GPS"
               className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
             />
-            {/* Botão para usar a localização via GPS */}
             <button
               type="button"
               onClick={handleUseLocation}
@@ -174,7 +204,6 @@ const PublicarEntulho = () => {
             </button>
           </div>
           
-          {/* Exibe um mapa com um pin se latitude e longitude estiverem disponíveis */}
           {form.latitude && form.longitude && (
             <div className="mb-4">
               <iframe
@@ -209,13 +238,29 @@ const PublicarEntulho = () => {
               value={form.categoria}
               onChange={handleChange}
               required
-              className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-black focus:outline-none"
+              className="w-full p-3 rounded-lg bg-transparent border border-white/30 text-black focus:outline-none"
             >
               <option value="">Selecione uma categoria</option>
               <option value="A">Classe A - Alvenarias, concreto, argamassas e solos</option>
               <option value="B">Classe B - Madeira, metal, plástico, papel, vidro</option>
               <option value="C">Classe C - Resíduos sem tecnologia para reciclagem (gesso, isopor)</option>
               <option value="D">Classe D - Resíduos perigosos (tintas, solventes, óleos, etc.)</option>
+            </select>
+          </div>
+
+          {/* Novo Campo: Tipo de Transação */}
+          <div className="mb-4">
+            <label className="block mb-1">Tipo de Transação</label>
+            <select
+              name="transacao"
+              value={form.transacao}
+              onChange={handleChange}
+              required
+              className="w-full p-3 rounded-lg bg-transparent border border-white/30 text-black focus:outline-none"
+            >
+              <option value="">Selecione o tipo de transação</option>
+              <option value="venda">Venda</option>
+              <option value="doacao">Doação</option>
             </select>
           </div>
           

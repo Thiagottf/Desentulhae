@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
-import { FaSearch, FaCommentDots, FaBell, FaUserCircle } from "react-icons/fa"
+import { FaSearch, FaCommentDots, FaBell, FaUserCircle, FaBlogger, FaMapMarkedAlt } from "react-icons/fa"
 import logo from "../assets/cacambaEntulho.jpg"
 
 const Header = () => {
@@ -21,7 +21,7 @@ const Header = () => {
   }
 
   return (
-    <header className="bg-white shadow-md  top-0 left-0 w-full z-50">
+    <header className="bg-white shadow-md top-0 left-0 w-full z-50">
       <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
         {/* LOGO E NOME */}
         <div className="flex items-center gap-2">
@@ -57,6 +57,16 @@ const Header = () => {
           <Link to="/notificacoes" className="hidden md:flex items-center text-gray-700 hover:text-gray-900">
             <FaBell size={18} className="mr-1" />
             Notificações
+          </Link>
+          {/* Atalho para o Blog com ícone */}
+          <Link to="/blog" className="hidden md:flex items-center text-gray-700 hover:text-gray-900">
+            <FaBlogger size={18} className="mr-1" />
+            Blog
+          </Link>
+          {/* Atalho para o Mapa Interativo */}
+          <Link to="/mapa" className="hidden md:flex items-center text-gray-700 hover:text-gray-900">
+            <FaMapMarkedAlt size={18} className="mr-1" />
+            Mapa
           </Link>
           {loggedUser ? (
             <Link to="/painelusuario" className="hidden md:flex items-center text-gray-700 hover:text-gray-900">
