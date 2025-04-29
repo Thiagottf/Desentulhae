@@ -73,12 +73,12 @@ const ReportarEntulho = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-200 p-4">
+    <div className="flex justify-center items-center min-h-screen bg-accent p-4">
       <div className="w-full max-w-xl bg-white p-6 rounded-lg shadow-lg">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="mb-4 bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition"
+          className="mb-4 bg-secondary text-white px-4 py-2 rounded hover:bg-gray-400 transition"
         >
           Voltar
         </button>
@@ -110,14 +110,14 @@ const ReportarEntulho = () => {
             <button
               type="button"
               onClick={handleUseLocation}
-              className="mt-2 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
+              className="mt-2 bg-secondary text-white px-3 py-1 rounded hover:bg-blue-600 transition"
             >
               Usar minha localização
             </button>
           </div>
           <button
             type="submit"
-            className="w-full bg-green-600 text-white font-semibold px-4 py-2 rounded hover:bg-green-700 transition"
+            className="w-full bg-accent text-white font-semibold px-4 py-2 rounded hover:bg-green-700 transition"
           >
             Reportar
           </button>

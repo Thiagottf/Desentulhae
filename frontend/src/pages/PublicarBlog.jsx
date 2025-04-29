@@ -71,7 +71,7 @@ const PublicarBlog = () => {
               placeholder="Digite um resumo para o post"
               rows="2"
               className="w-full p-3 rounded border border-gray-300 focus:outline-none"
-            ></textarea>
+            />
           </div>
           <div className="mb-4">
             <label className="block mb-1">Conteúdo</label>
@@ -83,7 +83,7 @@ const PublicarBlog = () => {
               placeholder="Digite o conteúdo completo do post"
               rows="6"
               className="w-full p-3 rounded border border-gray-300 focus:outline-none"
-            ></textarea>
+            />
           </div>
           <div className="mb-4">
             <label className="block mb-1">Imagem (opcional)</label>
