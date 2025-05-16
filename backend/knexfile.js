@@ -1,5 +1,5 @@
-// backend/knexfile.js
-require('dotenv').config()
+// /Desentulhae/backend/knexfile.js
+require('dotenv').config();
 
 module.exports = {
 development: {
@@ -9,13 +9,14 @@ development: {
     port     : process.env.PG_PORT,
     user     : process.env.PG_USER,
     password : process.env.PG_PASSWORD,
-    database : process.env.PG_DATABASE,
+    database : process.env.PG_DATABASE
     },
     migrations: {
-    directory: __dirname + '/migrations'
+    directory: './migrations'
     },
     seeds: {
-    directory: __dirname + '/seeds'
+    directory: './seeds'
     }
-}
-}
+},
+  // se quiser, adicione production, test, etc...
+};
