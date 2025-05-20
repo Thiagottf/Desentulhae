@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 const ReportarEntulho = () => {
   const navigate = useNavigate();
@@ -9,67 +10,68 @@ const ReportarEntulho = () => {
     latitude: null,
     longitude: null,
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setReport({ ...report, [name]: value });
+    setReport(prev => ({ ...prev, [name]: value }));
+    setError("");
   };
 
   const handleUseLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
-            );
-            const data = await response.json();
-            const displayAddress =
-              data.display_name ||
-              `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`;
-            setReport({
-              ...report,
-              latitude,
-              longitude,
-              localizacao: displayAddress,
-            });
-          } catch {
-            alert("Não foi possível obter seu endereço. Usando coordenadas.");
-            setReport({
-              ...report,
-              latitude,
-              longitude,
-              localizacao: `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`,
-            });
-          }
-        },
-        () => {
-          alert("Não foi possível obter sua localização.");
-        }
-      );
-    } else {
-      alert("Geolocalização não é suportada pelo seu navegador.");
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!report.localizacao) {
-      alert("Por favor, informe a localização ou use o GPS.");
+    if (!navigator.geolocation) {
+      setError("Geolocalização não suportada.");
       return;
     }
-    // Salvar o relatório de entulho no localStorage
-    const reports = JSON.parse(localStorage.getItem("reportedEntulhos")) || [];
-    const newReport = {
-      ...report,
-      id: Date.now(),
-      dataReport: new Date().toISOString(),
-    };
-    reports.push(newReport);
-    localStorage.setItem("reportedEntulhos", JSON.stringify(reports));
-    alert("Entulho reportado com sucesso!");
-    navigate("/mapa");
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        const { latitude, longitude } = coords;
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await response.json();
+          const displayAddress = data.display_name ||
+            `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`;
+          setReport(prev => ({
+            ...prev,
+            latitude,
+            longitude,
+            localizacao: displayAddress,
+          }));
+          setError("");
+        } catch {
+          setReport(prev => ({
+            ...prev,
+            latitude,
+            longitude,
+            localizacao: `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`,
+          }));
+          setError("");
+        }
+      },
+      () => setError("Não foi possível obter sua localização.")
+    );
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!report.localizacao) {
+      setError("Por favor, informe a localização ou use o GPS.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      await api.post("/reports", report);
+      navigate("/mapa");
+    } catch (err) {
+      console.error("Erro ao reportar entulho", err);
+      setError("Erro ao reportar entulho.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,11 +80,12 @@ const ReportarEntulho = () => {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="mb-4 bg-secondary text-white px-4 py-2 rounded hover:bg-gray-400 transition"
+          className="mb-4 bg-secondary text-white px-4 py-2 rounded hover:bg-gray-300 transition"
         >
           Voltar
         </button>
         <h1 className="text-3xl font-bold text-center mb-6">Reportar Entulho</h1>
+        {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block mb-1">Descrição do Reporte</label>
@@ -117,9 +120,10 @@ const ReportarEntulho = () => {
           </div>
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-accent text-white font-semibold px-4 py-2 rounded hover:bg-green-700 transition"
           >
-            Reportar
+            {loading ? "Enviando..." : "Reportar"}
           </button>
         </form>
       </div>

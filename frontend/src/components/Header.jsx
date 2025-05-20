@@ -1,23 +1,24 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { FaSearch, FaCommentDots, FaBell, FaUserCircle, FaBlogger, FaMapMarkedAlt } from "react-icons/fa";
+import { useState } from "react";
+import { FaSearch, FaCommentDots, FaBell, FaUserCircle, FaBlogger, FaMapMarkedAlt, FaUser } from "react-icons/fa";
 import logo from "../assets/cacambaEntulho.jpg";
+import { useAuth } from "../contexts/useAuth";
+
+
 
 const Header = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const [loggedUser, setLoggedUser] = useState(null);
-
-  useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem("usuarioLogado"));
-    if (userData) {
-      setLoggedUser(userData);
-    }
-  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
     navigate(`/buscar?query=${searchTerm}`);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   return (
@@ -66,17 +67,39 @@ const Header = () => {
             <FaMapMarkedAlt size={18} className="mr-1" />
             Mapa
           </Link>
-          {loggedUser ? (
-            <Link to="/painelusuario" className="hidden md:flex items-center text-secondary hover:text-primary">
+
+          {user ? (
+            <>
+              <Link to="/painelusuario" className="hidden md:flex items-center text-secondary hover:text-primary">
               <FaUserCircle size={18} className="mr-1" />
-              {loggedUser.apelido || loggedUser.nome || "Meu Perfil"}
-            </Link>
+              Olá, {user.apelido || user.name}
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="hidden md:flex bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"
+              >
+                Sair
+              </button>
+            </>
           ) : (
-            <Link to="/login" className="hidden md:flex items-center text-secondary hover:text-primary">
-              <FaUserCircle size={18} className="mr-1" />
-              Login
-            </Link>
+            <>
+              <Link
+                to="/login"
+                className="hidden md:flex items-center text-secondary hover:text-primary"
+              >
+                <FaUserCircle size={18} className="mr-1" />
+                Entrar
+              </Link>
+              <Link
+                to="/cadastro"
+                className="hidden md:flex items-center text-secondary hover:text-primary"
+              >
+                <FaUserCircle size={18} className="mr-1" />
+                Cadastrar
+              </Link>
+            </>
           )}
+
           <Link
             to="/publicar-entulho"
             className="bg-primary text-white px-4 py-2 rounded hover:brightness-90 transition"

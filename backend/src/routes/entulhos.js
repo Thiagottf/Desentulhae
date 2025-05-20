@@ -3,19 +3,20 @@ const router  = express.Router()
 const auth    = require('../middlewares/auth')
 const ctrl    = require('../controllers/entulhoController')
 
-// GET    /entulhos                → lista todos os entulhos
-router.get('/',          ctrl.index)
+// Rotas públicas
+// GET    /entulhos          → lista todos os entulhos
+// GET    /entulhos/:id      → detalhes de um entulho
+router.get('/',    ctrl.index)
+router.get('/:id', ctrl.show)
 
-// GET    /entulhos/:id            → detalhes de um entulho
-router.get('/:id',       ctrl.show)
+// Middleware de autenticação para rotas protegidas (criar, atualizar, remover)
+router.use(auth)
 
-// POST   /entulhos               → cria um novo entulho
-router.post('/',   auth, ctrl.create)
-
-// PUT    /entulhos/:id            → atualiza um entulho existente
-router.put('/:id', auth, ctrl.update)
-
-// DELETE /entulhos/:id            → exclui um entulho
-router.delete('/:id',auth, ctrl.remove)
+// POST   /entulhos          → cria um novo entulho
+// PUT    /entulhos/:id      → atualiza um entulho existente
+// DELETE /entulhos/:id      → exclui um entulho
+router.post('/',       ctrl.create)
+router.put('/:id',     ctrl.update)
+router.delete('/:id',  ctrl.remove)
 
 module.exports = router

@@ -1,14 +1,35 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaFlag } from "react-icons/fa";
+import api from "../services/api";
 
 const Home = () => {
   const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const postsData = JSON.parse(localStorage.getItem("posts")) || [];
-    setPosts(postsData);
+    (async () => {
+      setLoading(true);
+      try {
+        const { data } = await api.get("/entulhos");
+        setPosts(data.entulhos ?? data);
+      } catch (err) {
+        console.error("Erro ao carregar entulhos", err.response?.data || err);
+        setError("Não foi possível carregar os anúncios.");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
+
+  if (loading) {
+    return <p className="text-center mt-10">Carregando anúncios...</p>;
+  }
+
+  if (error) {
+    return <p className="text-center mt-10 text-red-500">{error}</p>;
+  }
 
   return (
     <div className="relative min-h-screen bg-gray-100 p-4">
@@ -44,19 +65,13 @@ const Home = () => {
                 className="block"
               >
                 <div className="max-w-sm w-full bg-white rounded-lg shadow-md p-4 cursor-pointer transition transform hover:scale-105 hover:shadow-lg mx-auto h-full flex flex-col justify-between">
-                  {post.imagens && post.imagens.length > 0 ? (
+                  {post.imagens && post.imagens.length > 0 && (
                     <img
                       src={post.imagens[0]}
                       alt={post.titulo}
                       className="w-full h-48 object-cover rounded-t-lg mb-4"
                     />
-                  ) : post.imagem ? (
-                    <img
-                      src={post.imagem}
-                      alt={post.titulo}
-                      className="w-full h-48 object-cover rounded-t-lg mb-4"
-                    />
-                  ) : null}
+                  )}
 
                   <div className="flex-1">
                     <h2 className="text-xl font-semibold mb-2">

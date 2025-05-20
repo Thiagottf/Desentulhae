@@ -1,24 +1,37 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import api from "../services/api";
 
 const DetalhesBlog = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const blogPosts = JSON.parse(localStorage.getItem("blogPosts")) || [];
-    const postIndex = Number(id);
-    if (blogPosts && blogPosts.length > postIndex) {
-      setPost(blogPosts[postIndex]);
-    } else {
-      alert("Post não encontrado.");
-      navigate("/blog");
-    }
+    (async () => {
+      setLoading(true);
+      try {
+        const { data } = await api.get(`/blog/${id}`);
+        setPost(data);
+      } catch (err) {
+        console.error("Erro ao carregar post do blog", err);
+        setError("Post não encontrado.");
+        setTimeout(() => navigate("/blog"), 2000);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [id, navigate]);
 
-  if (!post) {
-    return <p className="text-center mt-10">Carregando...</p>;
+  if (loading) {
+    return <p className="text-center mt-10">Carregando post...</p>;
+  }
+
+  if (error) {
+    return <p className="text-center mt-10 text-red-500">{error}</p>;
   }
 
   return (

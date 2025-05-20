@@ -1,31 +1,50 @@
-import { useState, useEffect } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import api from "../services/api";
 
 const PainelUsuario = () => {
-  const navigate = useNavigate()
-  const [userPosts, setUserPosts] = useState([])
+  const navigate = useNavigate();
+  const [userPosts, setUserPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const loggedUser = JSON.parse(localStorage.getItem("usuarioLogado"))
-    if (!loggedUser) {
-      alert("Você precisa estar logado para acessar essa página.")
-      navigate("/")
-      return
-    }
-    const allPosts = JSON.parse(localStorage.getItem("posts")) || []
-    const filteredPosts = allPosts.filter(post => post.usuario === loggedUser.email)
-    setUserPosts(filteredPosts)
-  }, [navigate])
+    (async () => {
+      setLoading(true);
+      try {
+        // Verifica se há token
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+        const { data } = await api.get('/usuarios/me/entulhos');
+        setUserPosts(data);
+      } catch (err) {
+        console.error('Erro ao carregar anúncios do usuário', err);
+        setError('Não foi possível carregar seus anúncios.');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [navigate]);
 
-  const handleDelete = (postId) => {
-    if (window.confirm("Tem certeza que deseja excluir esse anúncio?")) {
-      const allPosts = JSON.parse(localStorage.getItem("posts")) || []
-      const updatedPosts = allPosts.filter(post => post.id !== postId)
-      localStorage.setItem("posts", JSON.stringify(updatedPosts))
-      const loggedUser = JSON.parse(localStorage.getItem("usuarioLogado"))
-      const filteredPosts = updatedPosts.filter(post => post.usuario === loggedUser.email)
-      setUserPosts(filteredPosts)
+  const handleDelete = async (postId) => {
+    if (!window.confirm('Tem certeza que deseja excluir esse anúncio?')) return;
+    try {
+      await api.delete(`/entulhos/${postId}`);
+      setUserPosts(prev => prev.filter(post => post.id !== postId));
+    } catch (err) {
+      console.error('Erro ao excluir anúncio', err);
+      setError('Falha ao excluir anúncio.');
     }
+  };
+
+  if (loading) {
+    return <p className="text-center mt-10">Carregando seus anúncios...</p>;
+  }
+  if (error) {
+    return <p className="text-center mt-10 text-red-500">{error}</p>;
   }
 
   return (
@@ -36,7 +55,7 @@ const PainelUsuario = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {userPosts.map((post) => (
-            <div key={post.id} className="bg-white p-4 rounded shadow">
+            <div key={post.id} className="bg-white p-4 rounded shadow flex flex-col">
               <h2 className="text-xl font-semibold mb-2">{post.titulo}</h2>
               {post.imagens && post.imagens.length > 0 && (
                 <img
@@ -45,7 +64,7 @@ const PainelUsuario = () => {
                   className="w-full h-48 object-cover rounded mb-2"
                 />
               )}
-              <p className="text-gray-600 mb-2">{post.localizacao}</p>
+              <p className="text-gray-600 mb-2 flex-1">{post.localizacao}</p>
               <p className="text-gray-800 font-medium">Tipo: {post.categoria}</p>
               <div className="flex justify-between mt-4">
                 <Link to={`/detalhes/${post.id}`} className="text-blue-600 hover:underline">
@@ -69,7 +88,7 @@ const PainelUsuario = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default PainelUsuario
+export default PainelUsuario;

@@ -1,18 +1,33 @@
 import { useState, useEffect } from "react";
+import api from "../services/api";
 
 const Relatorios = () => {
-const [posts, setPosts] = useState([]);
+const [relatorioPorCategoria, setRelatorioPorCategoria] = useState({});
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
 
 useEffect(() => {
-    const postsData = JSON.parse(localStorage.getItem("posts")) || [];
-    setPosts(postsData);
+    (async () => {
+    setLoading(true);
+    try {
+        const { data } = await api.get('/entulhos/report');
+        // data esperado: { categoriaA: count, categoriaB: count, ... }
+        setRelatorioPorCategoria(data);
+    } catch (err) {
+        console.error('Erro ao carregar relatórios', err);
+        setError('Não foi possível carregar os relatórios.');
+    } finally {
+        setLoading(false);
+    }
+    })();
 }, []);
 
-  // Exemplo: agrupar por categoria ou destino (caso tenha esse campo)
-const relatorioPorCategoria = posts.reduce((acc, post) => {
-    acc[post.categoria] = (acc[post.categoria] || 0) + 1;
-    return acc;
-}, {});
+if (loading) {
+    return <p className="text-center mt-10">Carregando relatórios...</p>;
+}
+if (error) {
+    return <p className="text-center mt-10 text-red-500">{error}</p>;
+}
 
 return (
     <div className="max-w-4xl mx-auto p-4">
@@ -21,15 +36,15 @@ return (
     <table className="w-full border-collapse">
         <thead>
         <tr>
-            <th className="border p-2">Categoria</th>
-            <th className="border p-2">Quantidade</th>
+            <th className="border p-2 text-left">Categoria</th>
+            <th className="border p-2 text-right">Quantidade</th>
         </tr>
         </thead>
         <tbody>
         {Object.entries(relatorioPorCategoria).map(([categoria, quantidade]) => (
             <tr key={categoria}>
             <td className="border p-2">{categoria}</td>
-            <td className="border p-2">{quantidade}</td>
+            <td className="border p-2 text-right">{quantidade}</td>
             </tr>
         ))}
         </tbody>

@@ -1,43 +1,82 @@
+// mesma importação
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import api from "../services/api";
 
 const Detalhes = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [isSaved, setIsSaved] = useState(false);
   const [currentImg, setCurrentImg] = useState(0);
 
   useEffect(() => {
-    const posts = JSON.parse(localStorage.getItem("posts")) || [];
-    const found = posts.find((p) => p.id === Number(id));
-    if (!found) {
-      alert("Anúncio não encontrado.");
-      navigate("/home");
-      return;
+    (async () => {
+      setLoading(true);
+      try {
+        const response = await api.get(`/entulhos/${id}`);
+        const fetchedPost = response.data;
+        setPost(fetchedPost);
+
+        try {
+          const savedResp = await api.get("/usuarios/me/salvos");
+          const savedList = savedResp.data;
+          setIsSaved(savedList.some((item) => item.id === fetchedPost.id));
+        } catch {
+          // silencioso
+        }
+      } catch (err) {
+        console.error("Erro ao carregar anúncio", err);
+        setError("Anúncio não encontrado");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  const handleSave = async () => {
+    try {
+      if (isSaved) {
+        await api.delete(`/usuarios/me/salvos/${id}`);
+        setIsSaved(false);
+      } else {
+        await api.post(`/usuarios/me/salvos/${id}`);
+        setIsSaved(true);
+      }
+    } catch (err) {
+      console.error("Erro ao (des)salvar anúncio", err);
     }
-    setPost(found);
-    const user = JSON.parse(localStorage.getItem("usuarioLogado"));
-    if (user) {
-      const key = `salvos_${user.email}`;
-      const saved = JSON.parse(localStorage.getItem(key)) || [];
-      setIsSaved(saved.includes(found.id));
+  };
+
+  const handleBuy = async () => {
+    try {
+      await api.post(`/entulhos/${id}/compra`);
+      alert("Compra realizada! Anunciante notificado.");
+    } catch {
+      alert("Erro ao processar compra.");
     }
-  }, [id, navigate]);
+  };
 
-  const handleSave = () => { /* ...sem alterações... */ };
-  const handleBuy = () => { /* ...sem alterações... */ };
-  const handleSolicitar = () => { /* ...sem alterações... */ };
-  const handleOpenChat = () => { /* ...sem alterações... */ };
+  const handleSolicitar = async () => {
+    try {
+      await api.post(`/entulhos/${id}/doacao`);
+      alert("Solicitação enviada! Anunciante notificado.");
+    } catch {
+      alert("Erro ao processar solicitação.");
+    }
+  };
 
-  if (!post) {
-    return <p className="text-center mt-10">Carregando...</p>;
-  }
+  const handleOpenChat = () => navigate("/mensagens");
 
-  const imgs = post.imagens || [];
-  const prevImg = () =>
-    setCurrentImg((i) => (i - 1 + imgs.length) % imgs.length);
+  const imgs = post?.imagens || [];
+  const prevImg = () => setCurrentImg((i) => (i - 1 + imgs.length) % imgs.length);
   const nextImg = () => setCurrentImg((i) => (i + 1) % imgs.length);
+
+  if (loading) return <p className="text-center mt-10">Carregando anúncio...</p>;
+  if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -49,50 +88,56 @@ const Detalhes = () => {
       </button>
 
       <div className="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow space-y-6">
-        {/* Duas colunas: carousel ampliado à esquerda, infos à direita */}
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Coluna do Carousel (maior largura) */}
+          {/* Carrossel de imagens */}
           <div className="md:w-1/2 flex justify-center">
             <div className="relative w-80 sm:w-96 md:w-[28rem] mx-auto aspect-square rounded-lg overflow-hidden">
-              <img
-                src={imgs[currentImg]}
-                alt={`${post.titulo} ${currentImg + 1}`}
-                className="w-full h-full object-cover"
-              />
-              {imgs.length > 1 && (
+              {imgs.length > 0 ? (
                 <>
-                  <button
-                    onClick={prevImg}
-                    className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    onClick={nextImg}
-                    className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
-                  >
-                    ›
-                  </button>
-                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                    {imgs.map((_, idx) => (
-                      <span
-                        key={idx}
-                        className={`w-2 h-2 rounded-full ${
-                          idx === currentImg ? "bg-primary" : "bg-gray-300"
-                        }`}
-                      />
-                    ))}
-                  </div>
+                  <img
+                    src={imgs[currentImg]}
+                    alt={`${post.titulo} ${currentImg + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  {imgs.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevImg}
+                        className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        onClick={nextImg}
+                        className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full"
+                      >
+                        ›
+                      </button>
+                      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                        {imgs.map((_, idx) => (
+                          <span
+                            key={idx}
+                            className={`w-2 h-2 rounded-full ${
+                              idx === currentImg ? "bg-primary" : "bg-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 p-4">
+                  Sem imagem disponível
+                </div>
               )}
             </div>
           </div>
 
-          {/* Coluna de Informações e Ações */}
+          {/* Informações e ações */}
           <div className="md:w-1/2 flex flex-col justify-between">
             <div className="space-y-4">
               <h1 className="text-2xl font-bold">{post.titulo}</h1>
-
               <div className="flex flex-wrap items-center gap-4">
                 <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm">
                   {post.transacao === "venda" ? "Venda" : "Doação"}
@@ -103,30 +148,23 @@ const Detalhes = () => {
                   </span>
                 )}
               </div>
-
               <ul className="text-gray-800 space-y-1">
-                {post.volume && (
-                  <li>
-                    <strong>Volume:</strong> {post.volume}
-                  </li>
-                )}
-                {post.detalhesTipo && (
-                  <li>
-                    <strong>Detalhes:</strong> {post.detalhesTipo}
-                  </li>
-                )}
-                <li>
-                  <strong>Localização:</strong> {post.localizacao}
-                </li>
-                <li>
-                  <strong>Contato:</strong> {post.contato}
-                </li>
-                <li>
-                  <strong>Categoria:</strong> {post.categoria}
-                </li>
+                {post.volume && <li><strong>Volume:</strong> {post.volume}</li>}
+                {post.detalhesTipo && <li><strong>Detalhes:</strong> {post.detalhesTipo}</li>}
+                <li><strong>Localização:</strong> {post.localizacao}</li>
+                <li><strong>Contato:</strong> {post.contato || "Não informado"}</li>
+                <li><strong>Categoria:</strong> {post.categoria || "Não informada"}</li>
                 <li>
                   <strong>Data de postagem:</strong>{" "}
-                  {new Date(post.dataPublicacao).toLocaleString()}
+                  {post.created_at
+                    ? new Date(post.created_at).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                      })
+                    : "Não disponível"}
                 </li>
               </ul>
             </div>

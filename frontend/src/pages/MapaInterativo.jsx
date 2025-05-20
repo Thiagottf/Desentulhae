@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { useNavigate } from "react-router-dom"; // Importa useNavigate
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
-// Configurar ícones padrão do Leaflet para que os pins apareçam corretamente
+// Configurar ícones padrão do Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -16,12 +17,14 @@ L.Icon.Default.mergeOptions({
 });
 
 const MapaInterativo = () => {
-  const [userPosition, setUserPosition] = useState([-23.55052, -46.633308]); // Posição default (São Paulo)
+  const [userPosition, setUserPosition] = useState([-23.55052, -46.633308]);
   const [posts, setPosts] = useState([]);
-  const navigate = useNavigate(); // Inicializa o hook useNavigate
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Tenta obter a localização do usuário para centralizar o mapa
+    // Geolocalização
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -30,15 +33,30 @@ const MapaInterativo = () => {
             position.coords.longitude,
           ]);
         },
-        (error) => {
-          console.error("Erro ao obter localização:", error);
-        }
+        (err) => console.error("Erro ao obter localização:", err)
       );
     }
-    // Recupera os anúncios (publicados) do localStorage
-    const postsData = JSON.parse(localStorage.getItem("posts")) || [];
-    setPosts(postsData);
+    // Carrega anúncios da API
+    (async () => {
+      setLoading(true);
+      try {
+        const { data } = await api.get('/entulhos');
+        setPosts(data);
+      } catch (err) {
+        console.error('Erro ao carregar entulhos', err);
+        setError('Não foi possível carregar os anúncios.');
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
+
+  if (loading) {
+    return <p className="text-center mt-10">Carregando mapa...</p>;
+  }
+  if (error) {
+    return <p className="text-center mt-10 text-red-500">{error}</p>;
+  }
 
   return (
     <div className="min-h-screen p-4">
@@ -47,7 +65,7 @@ const MapaInterativo = () => {
       </h1>
       <div className="flex justify-center mb-4">
         <button
-          onClick={() => navigate("/mapa-reportados")}
+          onClick={() => navigate('/mapa-reportados')}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
         >
           Ver Mapas Reportados
@@ -62,22 +80,17 @@ const MapaInterativo = () => {
           attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {posts.map((post) => {
-          if (post.latitude && post.longitude) {
-            return (
-              <Marker key={post.id} position={[post.latitude, post.longitude]}>
-                <Popup>
-                  <strong>{post.titulo}</strong>
-                  <br />
-                  {post.localizacao}
-                  <br />
-                  <a href={`/detalhes/${post.id}`}>Ver detalhes</a>
-                </Popup>
-              </Marker>
-            );
-          }
-          return null;
-        })}
+        {posts.map((post) => (
+          post.latitude && post.longitude && (
+            <Marker key={post.id} position={[post.latitude, post.longitude]}>
+              <Popup>
+                <strong>{post.titulo}</strong><br />
+                {post.localizacao}<br />
+                <a href={`/detalhes/${post.id}`}>Ver detalhes</a>
+              </Popup>
+            </Marker>
+          )
+        ))}
       </MapContainer>
     </div>
   );

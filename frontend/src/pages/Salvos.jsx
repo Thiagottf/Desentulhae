@@ -1,23 +1,41 @@
-import { useState, useEffect } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 const Salvos = () => {
-const navigate = useNavigate()
-const [savedPosts, setSavedPosts] = useState([])
+const navigate = useNavigate();
+const [savedPosts, setSavedPosts] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
 
 useEffect(() => {
-    const loggedUser = JSON.parse(localStorage.getItem("usuarioLogado"))
-    if (!loggedUser) {
-    alert("Você precisa estar logado para acessar os anúncios salvos.")
-    navigate("/")
-    return
+    (async () => {
+    setLoading(true);
+    try {
+        // Verifica token
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) {
+        navigate('/login');
+        return;
+        }
+        const { data } = await api.get('/usuarios/me/salvos');
+        setSavedPosts(data);
+    } catch (err) {
+        console.error('Erro ao carregar anúncios salvos', err);
+        setError('Não foi possível carregar os anúncios salvos.');
+    } finally {
+        setLoading(false);
     }
-    const salvosKey = `salvos_${loggedUser.email}`
-    const savedIds = JSON.parse(localStorage.getItem(salvosKey)) || []
-    const allPosts = JSON.parse(localStorage.getItem("posts")) || []
-    const saved = allPosts.filter(post => savedIds.includes(post.id))
-    setSavedPosts(saved)
-}, [navigate])
+    })();
+}, [navigate]);
+
+if (loading) {
+    return <p className="text-center mt-10">Carregando anúncios salvos...</p>;
+}
+
+if (error) {
+    return <p className="text-center mt-10 text-red-500">{error}</p>;
+}
 
 return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -28,7 +46,7 @@ return (
         <p className="text-center text-gray-600">Você não salvou nenhum anúncio.</p>
     ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
-        {savedPosts.map(post => (
+        {savedPosts.map((post) => (
             <Link to={`/detalhes/${post.id}`} key={post.id} className="block">
             <div className="bg-white rounded-lg shadow-md p-4 cursor-pointer transition transform hover:scale-105 hover:shadow-lg">
                 {post.imagens && post.imagens.length > 0 ? (
@@ -51,7 +69,7 @@ return (
         </div>
     )}
     </div>
-)
-}
+);
+};
 
-export default Salvos
+export default Salvos;

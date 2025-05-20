@@ -44,16 +44,16 @@ exports.up = async function(knex) {
   await knex.schema.createTable('entulho', table => {
     table.increments('id').primary();
     table.string('cpf_autor', 11).notNullable()
-         .references('cpf').inTable('usuario')
-         .onDelete('CASCADE');
+        .references('cpf').inTable('usuario')
+        .onDelete('CASCADE');
     table.string('titulo', 80).notNullable();
     table.text('descricao').notNullable();
     table.text('localizacao').notNullable();
     table.decimal('latitude', 9, 6);
     table.decimal('longitude', 9, 6);
     table.integer('categoria_id').notNullable()
-         .references('id').inTable('categoria_entulho')
-         .onDelete('CASCADE');
+        .references('id').inTable('categoria_entulho')
+        .onDelete('CASCADE');
     table.text('detalhes_tipo');
     table.decimal('volume', 10, 2);
     table.decimal('preco', 10, 2);
@@ -195,6 +195,15 @@ exports.up = async function(knex) {
 };
 
 exports.down = async function(knex) {
+  // Drop triggers e functions primeiro (importante para não dar erro de referência)
+  await knex.raw(`
+    DROP TRIGGER IF EXISTS trg_entulho_updated_at ON entulho;
+    DROP FUNCTION IF EXISTS update_updated_at_column CASCADE;
+    DROP TRIGGER IF EXISTS blogpost_updated_at ON blog_post;
+    DROP FUNCTION IF EXISTS trg_update_blogpost_updated_at CASCADE;
+  `);
+
+  // Drop as tabelas na ordem inversa da criação (respeitando dependências)
   await knex.schema.dropTableIfExists('chat_message');
   await knex.schema.dropTableIfExists('notificacao');
   await knex.schema.dropTableIfExists('blog_post');
@@ -205,6 +214,12 @@ exports.down = async function(knex) {
   await knex.schema.dropTableIfExists('entulho');
   await knex.schema.dropTableIfExists('categoria_entulho');
   await knex.schema.dropTableIfExists('usuario');
+
+  // Drop enums por último
+  await knex.raw(`
+    DROP TYPE IF EXISTS modalidade;
+    DROP TYPE IF EXISTS user_role;
+  `);
 
   await knex.raw(`
     DROP TRIGGER IF EXISTS trg_entulho_updated_at ON entulho;

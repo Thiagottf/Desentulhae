@@ -1,71 +1,75 @@
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import api from "../services/api";
 
 const BuscarEntulho = () => {
-const [posts, setPosts] = useState([])
-const [filteredPosts, setFilteredPosts] = useState([])
-const [keyword, setKeyword] = useState("")
-const [categoria, setCategoria] = useState("")
-const [localizacao, setLocalizacao] = useState("")
-const [dataPublicacao, setDataPublicacao] = useState("")
-const [sortOrder, setSortOrder] = useState("desc") // 'desc' para mais recentes, 'asc' para mais antigas
-const [currentPage, setCurrentPage] = useState(1)
-const postsPerPage = 6
+const [posts, setPosts] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
 
-useEffect(() => {
-    const postsData = JSON.parse(localStorage.getItem("posts")) || []
-    setPosts(postsData)
-}, [])
+const [keyword, setKeyword] = useState("");
+const [categoria, setCategoria] = useState("");
+const [localizacao, setLocalizacao] = useState("");
+const [dataPublicacao, setDataPublicacao] = useState("");
+const [sortOrder, setSortOrder] = useState("desc");
+const [currentPage, setCurrentPage] = useState(1);
+const postsPerPage = 6;
 
+  // Fetch entulhos
 useEffect(() => {
-    // Filtra os posts conforme os critérios escolhidos
-    let result = [...posts]
+    (async () => {
+    setLoading(true);
+    try {
+        const { data } = await api.get("/entulhos");
+        setPosts(data);
+    } catch (err) {
+        console.error("Erro ao buscar entulhos", err);
+        setError("Não foi possível carregar os entulhos.");
+    } finally {
+        setLoading(false);
+    }
+    })();
+}, []);
+
+  // Filter and sort
+const filteredPosts = posts
+    .filter((post) => {
     if (keyword) {
-    result = result.filter(
-        post =>
-        post.titulo.toLowerCase().includes(keyword.toLowerCase()) ||
-        post.descricao.toLowerCase().includes(keyword.toLowerCase())
-    )
+        const term = keyword.toLowerCase();
+        if (!post.titulo.toLowerCase().includes(term) && !post.descricao.toLowerCase().includes(term)) {
+        return false;
+        }
     }
-    if (categoria) {
-    result = result.filter(post => post.categoria === categoria)
-    }
-    if (localizacao) {
-    result = result.filter(post =>
-        post.localizacao.toLowerCase().includes(localizacao.toLowerCase())
-    )
-    }
+    if (categoria && post.categoria !== categoria) return false;
+    if (localizacao && !post.localizacao.toLowerCase().includes(localizacao.toLowerCase())) return false;
     if (dataPublicacao) {
-    result = result.filter(post => {
-        if (!post.dataPublicacao) return false
-        const postDate = new Date(post.dataPublicacao).toISOString().slice(0, 10)
-        return postDate === dataPublicacao
-    })
+        if (!post.dataPublicacao) return false;
+        const postDate = new Date(post.dataPublicacao).toISOString().slice(0, 10);
+        if (postDate !== dataPublicacao) return false;
     }
-    // Ordena os posts pela data de publicação
-    result.sort((a, b) => {
-    if (!a.dataPublicacao || !b.dataPublicacao) return 0
-    if (sortOrder === "desc") {
-        return new Date(b.dataPublicacao) - new Date(a.dataPublicacao)
-    } else {
-        return new Date(a.dataPublicacao) - new Date(b.dataPublicacao)
-    }
+    return true;
     })
-    setFilteredPosts(result)
-    setCurrentPage(1)
-}, [keyword, categoria, localizacao, dataPublicacao, sortOrder, posts])
+    .sort((a, b) => {
+    if (!a.dataPublicacao || !b.dataPublicacao) return 0;
+    return sortOrder === "desc"
+        ? new Date(b.dataPublicacao) - new Date(a.dataPublicacao)
+        : new Date(a.dataPublicacao) - new Date(b.dataPublicacao);
+    });
 
-  // Lógica de paginação
-  const indexOfLastPost = currentPage * postsPerPage
-const indexOfFirstPost = indexOfLastPost - postsPerPage
-const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost)
-const totalPages = Math.ceil(filteredPosts.length / postsPerPage)
+  // Pagination logic
+const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+  const indexOfLastPost = currentPage * postsPerPage;
+const indexOfFirstPost = indexOfLastPost - postsPerPage;
+const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
 
-const handleNext = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1)
+const handleNext = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
+const handlePrev = () => currentPage > 1 && setCurrentPage(currentPage - 1);
+
+if (loading) {
+    return <p className="text-center mt-10">Carregando entulhos...</p>;
 }
-const handlePrev = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1)
+if (error) {
+    return <p className="text-center mt-10 text-red-500">{error}</p>;
 }
 
 return (
@@ -121,11 +125,12 @@ return (
         </div>
         <button
             onClick={() => {
-            setKeyword("")
-            setCategoria("")
-            setLocalizacao("")
-            setDataPublicacao("")
-            setSortOrder("desc")
+            setKeyword("");
+            setCategoria("");
+            setLocalizacao("");
+            setDataPublicacao("");
+            setSortOrder("desc");
+            setCurrentPage(1);
             }}
             className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition"
         >
@@ -136,16 +141,12 @@ return (
 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
         {currentPosts.length > 0 ? (
-        currentPosts.map((post, index) => (
-            <Link
-            to={`/detalhes/${index}`}
-            key={index}
-            className="block"
-            >
+        currentPosts.map((post) => (
+            <Link to={`/detalhes/${post.id}`} key={post.id} className="block">
             <div className="bg-white rounded-lg shadow-md p-4 cursor-pointer transition transform hover:scale-105 hover:shadow-lg">
                 {post.imagens && post.imagens.length > 0 ? (
                 <img
-                    src={post.imagens[0]} // Foto de capa: a primeira imagem
+                    src={post.imagens[0]}
                     alt={post.titulo}
                     className="w-full h-48 object-cover rounded-t-lg mb-4"
                 />
@@ -189,7 +190,7 @@ return (
         </div>
     )}
     </div>
-)
-}
+);
+};
 
-export default BuscarEntulho
+export default BuscarEntulho;

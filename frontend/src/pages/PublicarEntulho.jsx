@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 const PublicarEntulho = () => {
   const navigate = useNavigate();
@@ -9,7 +10,7 @@ const PublicarEntulho = () => {
     localizacao: "",
     contato: "",
     categoria: "",
-    transacao: "", // Venda ou Doação
+    transacao: "",
     preco: "",
     volume: "",
     detalhesTipo: "",
@@ -17,11 +18,12 @@ const PublicarEntulho = () => {
     latitude: null,
     longitude: null,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     let { name, value } = e.target;
     if (name === "preco") {
-      // permite apenas números e ponto decimal
       value = value.replace(/[^0-9.]/g, "");
     }
     setForm({ ...form, [name]: value });
@@ -30,7 +32,7 @@ const PublicarEntulho = () => {
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length < 4) {
-      alert("Por favor, faça upload de no mínimo 4 fotos.");
+      setError("Faça upload de no mínimo 4 fotos.");
       return;
     }
     const promises = files.map(
@@ -45,15 +47,16 @@ const PublicarEntulho = () => {
     Promise.all(promises)
       .then((results) => {
         setForm((prev) => ({ ...prev, imagens: results }));
+        setError("");
       })
       .catch(() => {
-        alert("Erro ao processar as imagens.");
+        setError("Erro ao processar as imagens.");
       });
   };
 
   const handleUseLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocalização não é suportada pelo seu navegador.");
+      setError("Geolocalização não suportada.");
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -64,7 +67,8 @@ const PublicarEntulho = () => {
             `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
           );
           const data = await resp.json();
-          const display = data.display_name ||
+          const display =
+            data.display_name ||
             `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`;
           setForm((prev) => ({
             ...prev,
@@ -72,8 +76,8 @@ const PublicarEntulho = () => {
             longitude,
             localizacao: display,
           }));
+          setError("");
         } catch {
-          alert("Não foi possível obter seu endereço. Mostrando coordenadas.");
           setForm((prev) => ({
             ...prev,
             latitude,
@@ -82,32 +86,33 @@ const PublicarEntulho = () => {
           }));
         }
       },
-      () => alert("Não foi possível obter sua localização.")
+      () => setError("Não foi possível obter sua localização.")
     );
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
     if (!form.imagens || form.imagens.length < 4) {
-      alert("Por favor, faça upload de no mínimo 4 fotos.");
+      setError("Faça upload de no mínimo 4 fotos.");
       return;
     }
     if (form.transacao === "venda" && !form.preco) {
-      alert("Informe um preço para venda.");
+      setError("Informe um preço para venda.");
       return;
     }
-    const user = JSON.parse(localStorage.getItem("usuarioLogado"));
-    const novoPost = {
-      ...form,
-      id: Date.now(),
-      usuario: user.email,
-      dataPublicacao: new Date().toISOString(),
-    };
-    const posts = JSON.parse(localStorage.getItem("posts")) || [];
-    posts.push(novoPost);
-    localStorage.setItem("posts", JSON.stringify(posts));
-    alert("Entulho publicado com sucesso!");
-    navigate("/home");
+
+    setLoading(true);
+    try {
+      await api.post("/entulhos", form);
+      navigate("/home");
+    } catch (err) {
+      console.error("Erro ao publicar entulho", err);
+      setError("Falha ao publicar entulho.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -122,7 +127,8 @@ const PublicarEntulho = () => {
         </button>
         <form onSubmit={handleSubmit}>
           <h1 className="text-3xl font-bold text-center mb-6">Publicar Entulho</h1>
-          
+          {error && <p className="text-red-500 mb-4">{error}</p>}
+
           {/* Título */}
           <div className="mb-4">
             <label className="block mb-1">Título</label>
@@ -196,11 +202,20 @@ const PublicarEntulho = () => {
               required
               className="w-full p-3 rounded-lg border border-black/30 focus:outline-none"
             >
-              <option value="">Selecione uma categoria</option>
-              <option value="A">Classe A - Alvenarias, concreto...</option>
-              <option value="B">Classe B - Madeira, metal...</option>
-              <option value="C">Classe C - Gesso, isopor...</option>
-              <option value="D">Classe D - Resíduos perigosos</option>
+              <option value="">Selecione a categoria do entulho</option>
+<option value="1">
+  Classe A – Resíduos reutilizáveis ou recicláveis como agregados
+</option>
+<option value="2">
+  Classe B – Resíduos recicláveis para outras destinações (plástico, papel, metais...)
+</option>
+<option value="3">
+  Classe C – Resíduos sem tecnologia economicamente viável para reciclagem
+</option>
+<option value="4">
+  Classe D – Resíduos perigosos ou contaminados (tintas, amianto, óleos, solventes)
+</option>
+
             </select>
           </div>
 
@@ -282,12 +297,13 @@ const PublicarEntulho = () => {
             />
           </div>
 
-          {/* Publicar */}
+          {/* Submit */}
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-primary text-white font-semibold py-2 rounded-full hover:brightness-90 transition"
           >
-            Publicar
+            {loading ? "Publicando..." : "Publicar"}
           </button>
         </form>
       </div>

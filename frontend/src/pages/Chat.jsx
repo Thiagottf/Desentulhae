@@ -1,62 +1,64 @@
-import React, { useState, useEffect, useRef } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 const Chat = () => {
-const { id } = useParams() // id do anúncio
-const navigate = useNavigate()
- const [post, setPost] = useState(null)
-const [chatMessages, setChatMessages] = useState([])
-const [newMessage, setNewMessage] = useState("")
-const chatContainerRef = useRef(null)
+const { id } = useParams(); // id do anúncio
+const navigate = useNavigate();
+const [post, setPost] = useState(null);
+const [chatMessages, setChatMessages] = useState([]);
+const [newMessage, setNewMessage] = useState("");
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
+const chatContainerRef = useRef(null);
 
 useEffect(() => {
-    // Verifica se o usuário está logado
-    const loggedUser = JSON.parse(localStorage.getItem("usuarioLogado"))
-    if (!loggedUser) {
-    alert("Você precisa estar logado para acessar o chat.")
-    navigate("/")
-    return
+    (async () => {
+    setLoading(true);
+    try {
+        // Autenticação
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) {
+        navigate('/login');
+        return;
+        }
+        // Busca anúncio
+        const postResp = await api.get(`/entulhos/${id}`);
+        setPost(postResp.data);
+        // Busca chat
+        const convId = `chat_${id}_${postResp.data.usuario}`;
+        const chatResp = await api.get(`/chats/${convId}`);
+        setChatMessages(chatResp.data);
+    } catch (err) {
+        console.error('Erro ao carregar chat', err);
+        setError('Não foi possível carregar o chat.');
+    } finally {
+        setLoading(false);
     }
+    })();
+}, [id, navigate]);
 
-    // Carrega o anúncio a partir do localStorage
-    const posts = JSON.parse(localStorage.getItem("posts")) || []
-    const foundPost = posts.find(p => p.id === Number(id))
-    if (!foundPost) {
-    alert("Anúncio não encontrado.")
-    navigate("/home")
-    return
-    }
-    setPost(foundPost)
-
-    // Define o identificador da conversa: combinação do id do anúncio e do anunciante
-    const conversationId = `chat_${foundPost.id}_${foundPost.usuario}`
-    const storedChat = JSON.parse(localStorage.getItem(conversationId)) || []
-    setChatMessages(storedChat)
-}, [id, navigate])
-
-const handleSend = (e) => {
-    e.preventDefault()
-    if (newMessage.trim() === "") return
-
-    const loggedUser = JSON.parse(localStorage.getItem("usuarioLogado"))
-    const conversationId = `chat_${post.id}_${post.usuario}`
-    const message = {
-    sender: loggedUser.email,
-    text: newMessage,
-    timestamp: new Date().toISOString()
-    }
-    const updatedChat = [...chatMessages, message]
-    setChatMessages(updatedChat)
-    localStorage.setItem(conversationId, JSON.stringify(updatedChat))
-    setNewMessage("")
-
-    // Rola para o final da lista de mensagens
+const handleSend = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+    try {
+    const convId = `chat_${id}_${post.usuario}`;
+    const resp = await api.post(`/chats/${convId}`, { text: newMessage });
+    setChatMessages(resp.data);
+    setNewMessage("");
+      // scroll
     setTimeout(() => {
-    if (chatContainerRef.current) {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+        if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    }, 100);
+    } catch (err) {
+    console.error('Erro ao enviar mensagem', err);
     }
-    }, 100)
-}
+};
+
+if (loading) return <p className="text-center mt-10">Carregando chat...</p>;
+if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
 
 return (
     <div className="min-h-screen bg-gray-100 p-4 flex flex-col">
@@ -72,12 +74,8 @@ return (
 
     {post && (
         <div className="mb-4 p-4 bg-white rounded shadow">
-        <p>
-            <strong>Anúncio:</strong> {post.titulo}
-        </p>
-        <p>
-            <strong>Anunciante:</strong> {post.usuario}
-        </p>
+        <p><strong>Anúncio:</strong> {post.titulo}</p>
+        <p><strong>Anunciante:</strong> {post.usuario}</p>
         </div>
     )}
 
@@ -87,20 +85,16 @@ return (
         style={{ maxHeight: "400px" }}
     >
         {chatMessages.length === 0 ? (
-        <p className="text-center text-gray-600">
-            Nenhuma mensagem ainda. Inicie a conversa!
-        </p>
+        <p className="text-center text-gray-600">Nenhuma mensagem ainda. Inicie a conversa!</p>
         ) : (
-        chatMessages.map((msg, index) => {
-            const loggedUser = JSON.parse(localStorage.getItem("usuarioLogado"))
-            const isUser = msg.sender === loggedUser.email
+        chatMessages.map((msg, idx) => {
+            const loggedUser = JSON.parse(localStorage.getItem('user'));
+            const isUser = msg.sender === loggedUser.email;
             return (
             <div
-                key={index}
+                key={idx}
                 className={`mb-2 p-2 rounded ${
-                isUser
-                    ? "bg-green-200 self-end text-right"
-                    : "bg-gray-200 self-start text-left"
+                isUser ? "bg-green-200 self-end text-right" : "bg-gray-200 self-start text-left"
                 }`}
             >
                 <p className="text-sm">{msg.text}</p>
@@ -108,7 +102,7 @@ return (
                 {new Date(msg.timestamp).toLocaleTimeString()}
                 </span>
             </div>
-            )
+            );
         })
         )}
     </div>
@@ -129,7 +123,7 @@ return (
         </button>
     </form>
     </div>
-)
-}
+);
+};
 
-export default Chat
+export default Chat;

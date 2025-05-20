@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import api from "../services/api";
 
 const EditarAnuncio = () => {
-const { id } = useParams()
-const navigate = useNavigate()
+const { id } = useParams();
+const navigate = useNavigate();
+
 const [form, setForm] = useState({
     titulo: "",
     descricao: "",
@@ -16,68 +18,79 @@ const [form, setForm] = useState({
     transacao: "",
     imagens: [],
     latitude: null,
-    longitude: null
-})
+    longitude: null,
+});
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
 
 useEffect(() => {
-    const posts = JSON.parse(localStorage.getItem("posts")) || []
-    const anuncio = posts.find(post => post.id === Number(id))
-    if (!anuncio) {
-    alert("Anúncio não encontrado.")
-    navigate("/painelusuario")
-    } else {
-    setForm(anuncio)
+    (async () => {
+    setLoading(true);
+    try {
+        const { data } = await api.get(`/entulhos/${id}`);
+        setForm(data);
+    } catch (err) {
+        console.error("Erro ao carregar anúncio", err);
+        setError("Anúncio não encontrado.");
+        setTimeout(() => navigate("/painelusuario"), 2000);
+    } finally {
+        setLoading(false);
     }
-}, [id, navigate])
+    })();
+}, [id, navigate]);
 
 const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-}
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+    setError("");
+};
 
 const handleFileChange = (e) => {
-    const files = Array.from(e.target.files)
+    const files = Array.from(e.target.files);
     if (files.length > 0) {
-    const promises = files.map(file =>
+    Promise.all(
+        files.map(file =>
         new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result)
-        reader.onerror = () => reject("Erro ao ler o arquivo")
-        reader.readAsDataURL(file)
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = () => reject("Erro ao ler arquivo");
+            reader.readAsDataURL(file);
         })
+        )
     )
-    Promise.all(promises)
-        .then(results => {
-        setForm(prev => ({ ...prev, imagens: results }))
-        })
-        .catch(() => {
-        alert("Erro ao processar as imagens.")
-        })
+        .then(results => setForm(prev => ({ ...prev, imagens: results })))
+        .catch(() => setError("Erro ao processar as imagens."));
     }
-}
+};
 
-const handleSubmit = (e) => {
-    e.preventDefault()
-    const posts = JSON.parse(localStorage.getItem("posts")) || []
-    const updatedPosts = posts.map(post => {
-    if (post.id === Number(id)) {
-        return { ...form }
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+    await api.put(`/entulhos/${id}`, form);
+    navigate("/painelusuario");
+    } catch (err) {
+    console.error("Erro ao salvar alterações", err);
+    setError("Falha ao atualizar anúncio.");
+    } finally {
+    setLoading(false);
     }
-    return post
-    })
-    localStorage.setItem("posts", JSON.stringify(updatedPosts))
-    alert("Anúncio atualizado com sucesso!")
-    navigate("/painelusuario")
-}
+};
 
-const handleDelete = () => {
-    if (window.confirm("Tem certeza que deseja excluir esse anúncio?")) {
-    const posts = JSON.parse(localStorage.getItem("posts")) || []
-    const updatedPosts = posts.filter(post => post.id !== Number(id))
-    localStorage.setItem("posts", JSON.stringify(updatedPosts))
-    alert("Anúncio excluído com sucesso!")
-    navigate("/painelusuario")
+const handleDelete = async () => {
+    if (!window.confirm("Tem certeza que deseja excluir esse anúncio?")) return;
+    try {
+    await api.delete(`/entulhos/${id}`);
+    navigate("/painelusuario");
+    } catch (err) {
+    console.error("Erro ao excluir anúncio", err);
+    setError("Falha ao excluir anúncio.");
     }
+};
+
+if (loading) {
+    return <p className="text-center mt-10">Carregando anúncio...</p>;
 }
 
 return (
@@ -89,8 +102,10 @@ return (
         >
         Voltar
         </button>
+        {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
         <h1 className="text-3xl font-bold text-center mb-6">Editar Anúncio</h1>
         <form onSubmit={handleSubmit}>
+          {/* Campos do formulário, iguais aos de PublicarEntulho.jsx, mas controlados por form */}
         <div className="mb-4">
             <label className="block mb-1">Título</label>
             <input
@@ -99,11 +114,9 @@ return (
             value={form.titulo}
             onChange={handleChange}
             required
-            placeholder="Digite o título do anúncio"
             className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
             />
         </div>
-        
         <div className="mb-4">
             <label className="block mb-1">Descrição</label>
             <textarea
@@ -111,70 +124,10 @@ return (
             value={form.descricao}
             onChange={handleChange}
             required
-            placeholder="Descreva os detalhes do entulho"
-            className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
             rows="4"
-            />
-        </div>
-        
-          {/* Campo Preço */}
-        <div className="mb-4">
-            <label className="block mb-1">Preço</label>
-            <input
-            type="text"
-            name="preco"
-            value={form.preco}
-            onChange={handleChange}
-            required
-            placeholder="Ex: R$ 100"
             className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
             />
         </div>
-
-          {/* Campo Volume */}
-        <div className="mb-4">
-            <label className="block mb-1">Volume (ex: 5 m³)</label>
-            <input
-            type="text"
-            name="volume"
-            value={form.volume}
-            onChange={handleChange}
-            required
-            placeholder="Digite o volume do entulho"
-            className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
-            />
-        </div>
-
-          {/* Campo Detalhes do Tipo */}
-        <div className="mb-4">
-            <label className="block mb-1">Detalhes do Tipo</label>
-            <textarea
-            name="detalhesTipo"
-            value={form.detalhesTipo}
-            onChange={handleChange}
-            required
-            placeholder="Ex: Reaproveitável, para reciclagem, etc."
-            className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
-            rows="3"
-            />
-        </div>
-
-          {/* Campo Tipo de Transação */}
-        <div className="mb-4">
-            <label className="block mb-1">Tipo de Transação</label>
-            <select
-            name="transacao"
-            value={form.transacao}
-            onChange={handleChange}
-            required
-            className="w-full p-3 rounded-lg bg-transparent border border-white/30 text-black focus:outline-none"
-            >
-            <option value="">Selecione o tipo de transação</option>
-            <option value="venda">Venda</option>
-            <option value="doacao">Doação</option>
-            </select>
-        </div>
-        
         <div className="mb-4">
             <label className="block mb-1">Localização</label>
             <input
@@ -183,52 +136,96 @@ return (
             value={form.localizacao}
             onChange={handleChange}
             required
-            placeholder="Digite a localização"
             className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
             />
         </div>
-        
         <div className="mb-4">
-            <label className="block mb-1">Contato (Telefone/WhatsApp)</label>
+            <label className="block mb-1">Contato</label>
             <input
             type="text"
             name="contato"
             value={form.contato}
             onChange={handleChange}
             required
-            placeholder="Digite seu contato"
             className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
             />
         </div>
-        
-        <div className="mb-4">
-            <label className="block mb-1">Tipo de Entulho</label>
+        <div className="mb-4 grid grid-cols-2 gap-4">
+            <div>
+            <label className="block mb-1">Categoria</label>
             <select
-            name="categoria"
-            value={form.categoria}
+                name="categoria"
+                value={form.categoria}
+                onChange={handleChange}
+                required
+                className="w-full p-3 rounded-lg bg-transparent border border-white/30 text-black focus:outline-none"
+            >
+                <option value="">Selecione</option>
+                <option value="A">Classe A</option>
+                <option value="B">Classe B</option>
+                <option value="C">Classe C</option>
+                <option value="D">Classe D</option>
+            </select>
+            </div>
+            <div>
+            <label className="block mb-1">Transação</label>
+            <select
+                name="transacao"
+                value={form.transacao}
+                onChange={handleChange}
+                required
+                className="w-full p-3 rounded-lg bg-transparent border border-white/30 text-black focus:outline-none"
+            >
+                <option value="">Selecione</option>
+                <option value="venda">Venda</option>
+                <option value="doacao">Doação</option>
+            </select>
+            </div>
+        </div>
+        {form.transacao === "venda" && (
+            <div className="mb-4 flex items-center">
+            <span className="px-3 bg-transparent text-white">R$</span>
+            <input
+                type="text"
+                name="preco"
+                value={form.preco}
+                onChange={handleChange}
+                required
+                className="flex-1 p-3 rounded-r-lg border border-white/30 placeholder-white text-white focus:outline-none"
+            />
+            </div>
+        )}
+        <div className="mb-4">
+            <label className="block mb-1">Volume</label>
+            <input
+            type="text"
+            name="volume"
+            value={form.volume}
             onChange={handleChange}
             required
-            className="w-full p-3 rounded-lg bg-transparent border border-white/30 text-black focus:outline-none"
-            >
-            <option value="">Selecione uma categoria</option>
-            <option value="A">Classe A - Alvenarias, concreto, argamassas e solos</option>
-            <option value="B">Classe B - Madeira, metal, plástico, papel, vidro</option>
-            <option value="C">Classe C - Resíduos sem tecnologia para reciclagem (gesso, isopor)</option>
-            <option value="D">Classe D - Resíduos perigosos (tintas, solventes, óleos, etc.)</option>
-            </select>
+            className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
+            />
         </div>
-        
+        <div className="mb-4">
+            <label className="block mb-1">Detalhes do Tipo</label>
+            <textarea
+            name="detalhesTipo"
+            value={form.detalhesTipo}
+            onChange={handleChange}
+            required
+            rows="3"
+            className="w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none"
+            />
+        </div>
         <div className="mb-4">
             <label className="block mb-1">Imagens (mínimo 4)</label>
             <input
             type="file"
-            name="imagens"
             multiple
             onChange={handleFileChange}
             className="w-full p-2 bg-transparent border border-white/30 text-white focus:outline-none"
             />
         </div>
-        
         <div className="flex justify-between">
             <button
             type="button"
@@ -241,13 +238,13 @@ return (
             type="submit"
             className="bg-white text-green-800 font-semibold px-4 py-2 rounded hover:bg-gray-100 transition"
             >
-            Salvar Alterações
+            {loading ? 'Salvando...' : 'Salvar Alterações'}
             </button>
         </div>
         </form>
     </div>
     </div>
-)
-}
+);
+};
 
-export default EditarAnuncio
+export default EditarAnuncio;

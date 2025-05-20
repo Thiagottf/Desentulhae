@@ -3,7 +3,10 @@ const db     = require('../config/knex')
 const bcrypt = require('bcrypt')
 const jwt    = require('jsonwebtoken')
 
-exports.register = async (req, res, next) => {
+const JWT_SECRET = process.env.JWT_SECRET || 'segredoDesentulhae' // fallback caso .env não esteja funcionando
+
+// Registro
+async function register(req, res) {
   const {
     cpf,
     nome_completo,
@@ -15,19 +18,23 @@ exports.register = async (req, res, next) => {
   } = req.body
 
   try {
-    // 1) Veja se já existe usuário com esse CPF ou e-mail
-    const existe = await db('usuario')
+    // Verificações únicas
+    const existente = await db('usuario')
       .where('cpf', cpf)
       .orWhere('email', email)
+      .orWhere('telefone', telefone)
       .first()
-    if (existe) {
-      return res.status(400).json({ error: 'CPF ou e-mail já cadastrado' })
+
+    if (existente) {
+      return res.status(400).json({
+        error: 'Já existe um usuário com esse CPF, e-mail ou telefone'
+      })
     }
 
-    // 2) Gere o hash da senha
+    // Criptografa senha
     const senha_hash = await bcrypt.hash(senha, 10)
 
-    // 3) Insira no banco
+    // Insere novo usuário
     await db('usuario').insert({
       cpf,
       nome_completo,
@@ -35,48 +42,58 @@ exports.register = async (req, res, next) => {
       data_nascimento,
       telefone,
       email,
-      senha_hash,          // coluna no seu schema
+      senha_hash,
       data_registro: db.fn.now(),
-      role: 'cliente'      // padrão, ou receba no body
+      role: 'cliente'
     })
 
     return res.status(201).json({ message: 'Usuário cadastrado com sucesso' })
   } catch (err) {
-    next(err)
+    console.error('Erro no registro:', err)
+    return res.status(500).json({ error: 'Erro interno do servidor', detalhes: err.message })
   }
 }
 
-exports.login = async (req, res, next) => {
-  const { cpf, senha } = req.body
+// Login
+async function login(req, res) {
+  const { email, cpf, senha } = req.body
 
   try {
-    // 1) Busque o usuário pelo CPF
+    // Busca por email ou cpf
     const user = await db('usuario')
-      .where('cpf', cpf)
+      .where(function () {
+        if (email) this.where('email', email)
+        if (cpf) this.orWhere('cpf', cpf)
+      })
       .first()
 
     if (!user) {
-      return res.status(401).json({ error: 'Credenciais inválidas' })
+      return res.status(401).json({ error: 'Usuário não encontrado' })
     }
 
-    // 2) Compare a senha enviada com o hash do banco
     const senhaValida = await bcrypt.compare(senha, user.senha_hash)
     if (!senhaValida) {
-      return res.status(401).json({ error: 'Credenciais inválidas' })
+      return res.status(401).json({ error: 'Senha incorreta' })
     }
 
-    // 3) Gere o token JWT (coloque as claims que quiser)
-    const payload = {
-      cpf:    user.cpf,
-      apelido:user.apelido,
-      role:   user.role
-    }
-    const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: '1h'
-    })
+    const token = jwt.sign(
+      {
+        cpf: user.cpf,
+        apelido: user.apelido,
+        role: user.role
+      },
+      JWT_SECRET,
+      { expiresIn: '1d' }
+    )
 
     return res.json({ token })
   } catch (err) {
-    next(err)
+    console.error('Erro no login:', err)
+    return res.status(500).json({ error: 'Erro interno do servidor', detalhes: err.message })
   }
+}
+
+module.exports = {
+  register,
+  login
 }
