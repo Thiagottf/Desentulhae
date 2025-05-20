@@ -1,27 +1,41 @@
+# =========================
+# BACKEND (.gitignore)
+# =========================
+/backend/node_modules
+/backend/.env
+/backend/*.sqlite
+/backend/*.log
+/backend/.DS_Store
+/backend/.vscode/
+backend/knexfile.local.js
+
 # Logs
-logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# SQLite (caso use temporariamente)
+*.sqlite
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# no frontend
+# =========================
+# FRONTEND (.gitignore)
+# =========================
+/frontend/node_modules
 /frontend/.env
+/frontend/dist
+/frontend/.DS_Store
+/frontend/.vscode/
+
+# Vite cache
+/frontend/.vite
+
+# Editor configs
+*.swp
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# System files
+.DS_Store
+Thumbs.db
