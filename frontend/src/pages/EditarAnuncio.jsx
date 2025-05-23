@@ -218,14 +218,27 @@ return (
             />
         </div>
         <div className="mb-4">
-            <label className="block mb-1">Imagens (mínimo 4)</label>
+            <label className="block mb-2 font-semibold">Imagens (mínimo 4)</label>
             <input
-            type="file"
-            multiple
-            onChange={handleFileChange}
-            className="w-full p-2 bg-transparent border border-white/30 text-white focus:outline-none"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileChange}
+                className="w-full p-2 bg-transparent border border-white/30 text-white focus:outline-none"
             />
-        </div>
+            {form.imagens?.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
+                {form.imagens.map((src, index) => (
+                    <img
+                    key={index}
+                    src={src}
+                    alt={`Imagem ${index + 1}`}
+                    className="w-full h-32 object-cover rounded-lg border border-white/20"
+                    />
+                ))}
+                </div>
+            )}
+            </div>
         <div className="flex justify-between">
             <button
             type="button"

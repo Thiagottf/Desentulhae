@@ -38,4 +38,8 @@ if (req.user.cpf !== req.params.cpf) {
 ctrl.remove(req, res, next)
 })
 
+// GET /users/me/entulhos → lista os entulhos do usuário logado
+router.get('/me/entulhos', auth, ctrl.listarEntulhosDoUsuario);
+
+
 module.exports = router

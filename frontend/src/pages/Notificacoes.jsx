@@ -7,25 +7,19 @@ const Notificacoes = () => {
   const [notificacoes, setNotificacoes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [enabled, setEnabled] = useState(true);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        // Checa autenticação
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         if (!token) {
           navigate('/login');
           return;
         }
-        // Carrega notificações e status
-        const [notifsResp, settingResp] = await Promise.all([
-          api.get('/notificacoes'),
-          api.get('/notificacoes/toggle')
-        ]);
-        setNotificacoes(notifsResp.data);
-        setEnabled(settingResp.data.enabled);
+
+        const { data } = await api.get('/notificacoes');
+        setNotificacoes(data);
       } catch (err) {
         console.error('Erro ao carregar notificações', err);
         setError('Não foi possível carregar notificações.');
@@ -34,15 +28,6 @@ const Notificacoes = () => {
       }
     })();
   }, [navigate]);
-
-  const handleToggle = async () => {
-    try {
-      const resp = await api.post('/notificacoes/toggle', { enabled: !enabled });
-      setEnabled(resp.data.enabled);
-    } catch (err) {
-      console.error('Erro ao alternar notificações', err);
-    }
-  };
 
   if (loading) return <p className="text-center mt-10">Carregando notificações...</p>;
   if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
@@ -55,30 +40,42 @@ const Notificacoes = () => {
       >
         Voltar
       </button>
+
       <h1 className="text-3xl font-bold text-green-800 mb-6 text-center">
         Notificações
       </h1>
-
-      <div className="mb-6 max-w-xl mx-auto bg-white p-4 rounded shadow flex justify-between items-center">
-        <span className="font-semibold">Notificações Ativadas:</span>
-        <button
-          onClick={handleToggle}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-        >
-          {enabled ? 'Desativar' : 'Ativar'}
-        </button>
-      </div>
 
       {notificacoes.length === 0 ? (
         <p className="text-center text-gray-600">Nenhuma notificação encontrada.</p>
       ) : (
         <div className="max-w-4xl mx-auto">
           {notificacoes.map((notif) => (
-            <div key={notif.id} className="bg-white p-4 rounded shadow mb-4">
-              <p>{notif.message}</p>
-              <span className="text-xs text-gray-600">
-                {new Date(notif.timestamp).toLocaleString()}
+            <div
+              key={notif.id}
+              className={`bg-white p-4 rounded shadow mb-4 border-l-4 ${
+                notif.lida ? 'border-gray-300' : 'border-green-500'
+              }`}
+            >
+              <p className="text-gray-800">{notif.mensagem}</p>
+              <span className="text-xs text-gray-600 block mt-1">
+                {new Date(notif.criado_em).toLocaleString('pt-BR')}
               </span>
+
+              {!notif.lida && (
+                <button
+                  onClick={async () => {
+                    await api.patch(`/notificacoes/${notif.id}/lida`);
+                    setNotificacoes((prev) =>
+                      prev.map((n) =>
+                        n.id === notif.id ? { ...n, lida: true } : n
+                      )
+                    );
+                  }}
+                  className="mt-2 text-sm text-blue-600 hover:underline"
+                >
+                  Marcar como lida
+                </button>
+              )}
             </div>
           ))}
         </div>

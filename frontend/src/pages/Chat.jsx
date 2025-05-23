@@ -26,7 +26,7 @@ useEffect(() => {
         const postResp = await api.get(`/entulhos/${id}`);
         setPost(postResp.data);
         // Busca chat
-        const convId = `chat_${id}_${postResp.data.usuario}`;
+        const convId = id;
         const chatResp = await api.get(`/chats/${convId}`);
         setChatMessages(chatResp.data);
     } catch (err) {
@@ -39,23 +39,25 @@ useEffect(() => {
 }, [id, navigate]);
 
 const handleSend = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-    try {
-    const convId = `chat_${id}_${post.usuario}`;
+e.preventDefault();
+if (!newMessage.trim()) return;
+try {
+    const convId = id; // ✅ usa só o id do entulho
     const resp = await api.post(`/chats/${convId}`, { text: newMessage });
     setChatMessages(resp.data);
     setNewMessage("");
-      // scroll
+
+    // scroll para baixo
     setTimeout(() => {
-        if (chatContainerRef.current) {
+    if (chatContainerRef.current) {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-    }, 100);
-    } catch (err) {
-    console.error('Erro ao enviar mensagem', err);
     }
+    }, 100);
+} catch (err) {
+    console.error('Erro ao enviar mensagem', err);
+}
 };
+
 
 if (loading) return <p className="text-center mt-10">Carregando chat...</p>;
 if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
@@ -75,7 +77,7 @@ return (
     {post && (
         <div className="mb-4 p-4 bg-white rounded shadow">
         <p><strong>Anúncio:</strong> {post.titulo}</p>
-        <p><strong>Anunciante:</strong> {post.usuario}</p>
+        <p><strong>Local:</strong> {post.localizacao}</p>
         </div>
     )}
 

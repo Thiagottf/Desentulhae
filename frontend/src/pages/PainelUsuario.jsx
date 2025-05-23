@@ -12,13 +12,13 @@ const PainelUsuario = () => {
     (async () => {
       setLoading(true);
       try {
-        // Verifica se há token
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         if (!token) {
           navigate('/login');
           return;
         }
-        const { data } = await api.get('/usuarios/me/entulhos');
+
+        const { data } = await api.get('/users/me/entulhos');
         setUserPosts(data);
       } catch (err) {
         console.error('Erro ao carregar anúncios do usuário', err);
@@ -43,6 +43,7 @@ const PainelUsuario = () => {
   if (loading) {
     return <p className="text-center mt-10">Carregando seus anúncios...</p>;
   }
+
   if (error) {
     return <p className="text-center mt-10 text-red-500">{error}</p>;
   }
@@ -55,17 +56,45 @@ const PainelUsuario = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {userPosts.map((post) => (
-            <div key={post.id} className="bg-white p-4 rounded shadow flex flex-col">
+            <div
+              key={post.id}
+              className="bg-white p-4 rounded shadow flex flex-col transform transition-transform duration-200 hover:scale-105 hover:shadow-lg"
+            >
               <h2 className="text-xl font-semibold mb-2">{post.titulo}</h2>
-              {post.imagens && post.imagens.length > 0 && (
+
+              {post.imagens && post.imagens.length > 0 ? (
                 <img
                   src={post.imagens[0]}
                   alt={post.titulo}
                   className="w-full h-48 object-cover rounded mb-2"
                 />
+              ) : (
+                <div className="w-full h-48 bg-gray-200 rounded mb-2 flex items-center justify-center text-gray-500">
+                  Sem imagem
+                </div>
               )}
+
               <p className="text-gray-600 mb-2 flex-1">{post.localizacao}</p>
-              <p className="text-gray-800 font-medium">Tipo: {post.categoria}</p>
+
+              <p className="text-gray-500 text-sm mb-1">
+                Publicado em:{" "}
+                {post.created_at
+                  ? new Date(post.created_at).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit"
+                    })
+                  : "Data não disponível"}
+              </p>
+
+              <p className="text-gray-800 font-medium">
+                Tipo: {post.categoria
+                  ? `Classe ${post.categoria} – ${post.categoria_descricao}`
+                  : "Não informada"}
+              </p>
+
               <div className="flex justify-between mt-4">
                 <Link to={`/detalhes/${post.id}`} className="text-blue-600 hover:underline">
                   Visualizar

@@ -1,12 +1,9 @@
-const express = require('express')
-const router  = express.Router()
-const auth    = require('../middlewares/auth')
-const ctrl    = require('../controllers/notificationController')
+const express = require('express');
+const router = express.Router();
+const auth = require('../middlewares/auth');
+const ctrl = require('../controllers/notificationController');
 
-// GET    /notificacoes           → lista todas as notificações do usuário
-router.get('/',      auth, ctrl.index)
+router.get('/', auth, ctrl.listar);
+router.patch('/:id/lida', auth, ctrl.marcarComoLida);
 
-// PUT    /notificacoes/:id       → marca notificação como lida
-router.put('/:id',   auth, ctrl.markAsRead)
-
-module.exports = router
+module.exports = router;

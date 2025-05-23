@@ -1,14 +1,51 @@
-// src/controllers/chatController.js
-// const db = require('../config/db')
+const db = require('../config/db');
 
+// 🔁 Lista as mensagens do chat
 exports.list = async (req, res, next) => {
   try {
-    res.json([]) // lista mensagens
-  } catch (err) { next(err) }
-}
+    const entulho_id = Number(req.params.entulhoId);
+    if (isNaN(entulho_id)) {
+      return res.status(400).json({ error: "ID inválido." });
+    }
 
+    const mensagens = await db('chat_message')
+      .where({ entulho_id })
+      .orderBy('enviado_em', 'asc');
+
+    return res.json(mensagens); // ✅ mesmo se vazio, retorna []
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 📨 Envia uma nova mensagem
 exports.send = async (req, res, next) => {
   try {
-    res.status(201).json({ id: 1, texto: req.body.texto }) // stub
-  } catch (err) { next(err) }
-}
+    const entulho_id = Number(req.params.entulhoId);
+    if (isNaN(entulho_id)) {
+      return res.status(400).json({ error: "ID inválido." });
+    }
+
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: "Mensagem vazia." });
+    }
+
+    const sender = req.user.email; // ou req.user.cpf
+
+    await db('chat_message').insert({
+      entulho_id,
+      remetente_cpf: req.user.cpf,
+      texto: text,
+      enviado_em: new Date()
+    });
+
+    const mensagens = await db('chat_message')
+      .where({ entulho_id })
+      .orderBy('enviado_em', 'asc');
+
+    res.status(201).json(mensagens);
+  } catch (err) {
+    next(err);
+  }
+};

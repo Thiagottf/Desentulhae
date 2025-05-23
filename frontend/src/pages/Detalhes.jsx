@@ -1,4 +1,3 @@
-// mesma importação
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import api from "../services/api";
@@ -12,6 +11,7 @@ const Detalhes = () => {
   const [error, setError] = useState("");
   const [isSaved, setIsSaved] = useState(false);
   const [currentImg, setCurrentImg] = useState(0);
+  const [solicitando, setSolicitando] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -25,9 +25,8 @@ const Detalhes = () => {
           const savedResp = await api.get("/usuarios/me/salvos");
           const savedList = savedResp.data;
           setIsSaved(savedList.some((item) => item.id === fetchedPost.id));
-        } catch {
-          // silencioso
-        }
+        } catch (err) {
+  console.warn("Erro ao buscar salvos, ignorado:", err);}
       } catch (err) {
         console.error("Erro ao carregar anúncio", err);
         setError("Anúncio não encontrado");
@@ -51,25 +50,20 @@ const Detalhes = () => {
     }
   };
 
-  const handleBuy = async () => {
-    try {
-      await api.post(`/entulhos/${id}/compra`);
-      alert("Compra realizada! Anunciante notificado.");
-    } catch {
-      alert("Erro ao processar compra.");
-    }
-  };
+  const handleSolicitacao = async () => {
+  setSolicitando(true);
+  try {
+    await api.post(`/entulhos/${id}/solicitar`);
+    alert("Solicitação enviada com sucesso!");
+    navigate("/notificacoes");
+  } catch {
+    alert("Erro ao processar solicitação.");
+  } finally {
+    setSolicitando(false);
+  }
+};
 
-  const handleSolicitar = async () => {
-    try {
-      await api.post(`/entulhos/${id}/doacao`);
-      alert("Solicitação enviada! Anunciante notificado.");
-    } catch {
-      alert("Erro ao processar solicitação.");
-    }
-  };
-
-  const handleOpenChat = () => navigate("/mensagens");
+  const handleOpenChat = () => navigate(`/mensagens/${id}`);
 
   const imgs = post?.imagens || [];
   const prevImg = () => setCurrentImg((i) => (i - 1 + imgs.length) % imgs.length);
@@ -149,11 +143,20 @@ const Detalhes = () => {
                 )}
               </div>
               <ul className="text-gray-800 space-y-1">
-                {post.volume && <li><strong>Volume:</strong> {post.volume}</li>}
+                {post.volume && (
+                  <li>
+                    <strong>Volume:</strong> {parseFloat(post.volume).toFixed(2)} m³
+                  </li>
+                )}
                 {post.detalhesTipo && <li><strong>Detalhes:</strong> {post.detalhesTipo}</li>}
                 <li><strong>Localização:</strong> {post.localizacao}</li>
                 <li><strong>Contato:</strong> {post.contato || "Não informado"}</li>
-                <li><strong>Categoria:</strong> {post.categoria || "Não informada"}</li>
+                <li>
+                  <strong>Categoria:</strong>{" "}
+                  {post.categoria
+                    ? `Classe ${post.categoria} – ${post.categoria_descricao}`
+                    : "Não informada"}
+                </li>
                 <li>
                   <strong>Data de postagem:</strong>{" "}
                   {post.created_at
@@ -176,21 +179,22 @@ const Detalhes = () => {
               >
                 Abrir Chat
               </button>
-              {post.transacao === "venda" ? (
-                <button
-                  onClick={handleBuy}
-                  className="flex-1 bg-primary text-white px-4 py-2 rounded hover:brightness-90 transition"
-                >
-                  Comprar
-                </button>
-              ) : (
-                <button
-                  onClick={handleSolicitar}
-                  className="flex-1 bg-primary text-white px-4 py-2 rounded hover:brightness-90 transition"
-                >
-                  Solicitar
-                </button>
-              )}
+              <button
+                onClick={handleSolicitacao}
+                disabled={solicitando}
+                className={`flex-1 px-4 py-2 rounded transition text-white ${
+                  solicitando
+                    ? "bg-primary/70 cursor-not-allowed"
+                    : "bg-primary hover:brightness-90"
+                }`}
+              >
+                {solicitando
+                  ? "Enviando..."
+                  : post.transacao === "venda"
+                  ? "Comprar"
+                  : "Solicitar"}
+              </button>
+
               <button
                 onClick={handleSave}
                 className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:brightness-90 transition"

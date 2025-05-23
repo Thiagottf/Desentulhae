@@ -65,7 +65,7 @@ function App() {
               element={<PrivateRoute><EditarAnuncio /></PrivateRoute>}
             />
             <Route
-              path="/mensagens"
+              path="/mensagens/:id"
               element={<PrivateRoute><Chat /></PrivateRoute>}
             />
             <Route

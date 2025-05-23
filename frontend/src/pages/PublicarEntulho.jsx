@@ -29,30 +29,31 @@ const PublicarEntulho = () => {
     setForm({ ...form, [name]: value });
   };
 
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length < 4) {
-      setError("Faça upload de no mínimo 4 fotos.");
-      return;
-    }
-    const promises = files.map(
-      (file) =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = () => reject("Erro ao ler o arquivo");
-          reader.readAsDataURL(file);
-        })
-    );
-    Promise.all(promises)
-      .then((results) => {
-        setForm((prev) => ({ ...prev, imagens: results }));
-        setError("");
-      })
-      .catch(() => {
-        setError("Erro ao processar as imagens.");
-      });
-  };
+const handleFileChange = (e) => {
+  const files = Array.from(e.target.files);
+  if (files.length < 4) {
+    alert("Por favor, envie no mínimo 4 fotos.");
+    return;
+  }
+
+  const promises = files.map(file =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => reject("Erro ao ler imagem");
+      reader.readAsDataURL(file);
+    })
+  );
+
+  Promise.all(promises)
+    .then(base64List => {
+      setForm(prev => ({ ...prev, imagens: base64List }));
+    })
+    .catch(() => {
+      alert("Erro ao processar as imagens.");
+    });
+};
+
 
   const handleUseLocation = () => {
     if (!navigator.geolocation) {
