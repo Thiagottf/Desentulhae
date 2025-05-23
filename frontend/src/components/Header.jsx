@@ -51,7 +51,7 @@ const Header = () => {
 
         {/* LINKS E AÇÕES */}
         <div className="flex items-center gap-4">
-          <Link to="/mensagens" className="hidden md:flex items-center text-secondary hover:text-primary">
+          <Link to="/conversas" className="hidden md:flex items-center text-secondary hover:text-primary">
             <FaCommentDots size={18} className="mr-1" />
             Chat
           </Link>

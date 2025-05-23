@@ -25,7 +25,7 @@ app.use('/api/users',        userRoutes)
 app.use('/api/entulhos',     entulhoRoutes)
 app.use('/api/blog',         blogRoutes)
 app.use('/api/reports',      reportRoutes)
-app.use('/api/chat',         chatRoutes)
+app.use('/api/conversas', chatRoutes)
 app.use('/api/notificacoes', notifRoutes)
 
 // 404

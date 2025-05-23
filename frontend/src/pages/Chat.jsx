@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
 const Chat = () => {
-const { id } = useParams(); // id do anúncio
+  const { id } = useParams(); // id do anúncio
 const navigate = useNavigate();
 const [post, setPost] = useState(null);
 const [chatMessages, setChatMessages] = useState([]);
@@ -12,26 +12,36 @@ const [loading, setLoading] = useState(true);
 const [error, setError] = useState("");
 const chatContainerRef = useRef(null);
 
+  // Função para decodificar o JWT
+function parseJwt(token) {
+    try {
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(base64));
+    } catch {
+    return null;
+    }
+}
+
 useEffect(() => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const loggedUser = parseJwt(token);
+
     (async () => {
     setLoading(true);
     try {
-        // Autenticação
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        if (!token) {
-        navigate('/login');
+        if (!token || !loggedUser) {
+        navigate("/login");
         return;
         }
-        // Busca anúncio
+
         const postResp = await api.get(`/entulhos/${id}`);
         setPost(postResp.data);
-        // Busca chat
-        const convId = id;
-        const chatResp = await api.get(`/chats/${convId}`);
+
+        const chatResp = await api.get(`/conversas/${id}`);
         setChatMessages(chatResp.data);
     } catch (err) {
-        console.error('Erro ao carregar chat', err);
-        setError('Não foi possível carregar o chat.');
+        console.error("Erro ao carregar chat", err);
+        setError("Não foi possível carregar o chat.");
     } finally {
         setLoading(false);
     }
@@ -39,28 +49,29 @@ useEffect(() => {
 }, [id, navigate]);
 
 const handleSend = async (e) => {
-e.preventDefault();
-if (!newMessage.trim()) return;
-try {
-    const convId = id; // ✅ usa só o id do entulho
-    const resp = await api.post(`/chats/${convId}`, { text: newMessage });
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+    try {
+    const resp = await api.post(`/conversas/${id}`, { text: newMessage });
     setChatMessages(resp.data);
     setNewMessage("");
 
-    // scroll para baixo
     setTimeout(() => {
-    if (chatContainerRef.current) {
+        if (chatContainerRef.current) {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
+        }
     }, 100);
-} catch (err) {
-    console.error('Erro ao enviar mensagem', err);
-}
+    } catch (err) {
+    console.error("Erro ao enviar mensagem", err);
+    }
 };
-
 
 if (loading) return <p className="text-center mt-10">Carregando chat...</p>;
 if (error) return <p className="text-center mt-10 text-red-500">{error}</p>;
+
+  // Pegamos o usuário aqui fora do efeito (apenas para renderização)
+const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+const loggedUser = parseJwt(token);
 
 return (
     <div className="min-h-screen bg-gray-100 p-4 flex flex-col">
@@ -70,9 +81,7 @@ return (
     >
         Voltar
     </button>
-    <h1 className="text-3xl font-bold text-green-800 mb-4 text-center">
-        Chat com o Anunciante
-    </h1>
+    <h1 className="text-3xl font-bold text-green-800 mb-4 text-center">Chat com o Anunciante</h1>
 
     {post && (
         <div className="mb-4 p-4 bg-white rounded shadow">
@@ -90,8 +99,7 @@ return (
         <p className="text-center text-gray-600">Nenhuma mensagem ainda. Inicie a conversa!</p>
         ) : (
         chatMessages.map((msg, idx) => {
-            const loggedUser = JSON.parse(localStorage.getItem('user'));
-            const isUser = msg.sender === loggedUser.email;
+            const isUser = loggedUser && msg.remetente_cpf === loggedUser.cpf;
             return (
             <div
                 key={idx}
@@ -99,9 +107,9 @@ return (
                 isUser ? "bg-green-200 self-end text-right" : "bg-gray-200 self-start text-left"
                 }`}
             >
-                <p className="text-sm">{msg.text}</p>
+                <p className="text-sm">{msg.texto}</p>
                 <span className="text-xs text-gray-600">
-                {new Date(msg.timestamp).toLocaleTimeString()}
+                {new Date(msg.enviado_em).toLocaleTimeString()}
                 </span>
             </div>
             );

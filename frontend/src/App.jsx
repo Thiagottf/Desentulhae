@@ -22,6 +22,7 @@ import MapaReportados from './pages/MapaReportados.jsx'
 import MobileNavbar from './components/MobileNavbar.jsx'
 import Header from './components/Header.jsx'
 import Footer from './components/Footer.jsx'
+import Conversas from './pages/Conversas.jsx'
 
 // Protege rotas privadas usando o contexto de autenticação
 function PrivateRoute({ children }) {
@@ -87,6 +88,10 @@ function App() {
             <Route
               path="/mapa-reportados"
               element={<PrivateRoute><MapaReportados /></PrivateRoute>}
+            />
+            <Route
+              path="/conversas"
+              element={<PrivateRoute><Conversas /></PrivateRoute>}
             />
             {/* Fallback para rotas não existentes */}
             <Route path="*" element={<Navigate to="/" replace />} />

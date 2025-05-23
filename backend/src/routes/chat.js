@@ -9,4 +9,6 @@ router.get('/:entulhoId', auth, ctrl.list);
 // POST /chats/:entulhoId → envia nova mensagem
 router.post('/:entulhoId', auth, ctrl.send);
 
+router.get('/', auth, ctrl.listAllForUser);
+
 module.exports = router;
