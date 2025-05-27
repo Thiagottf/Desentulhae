@@ -1,9 +1,21 @@
-// backend/src/config/knex.js
-require('dotenv').config();           // carrega .env
+require('dotenv').config();
 const knex = require('knex');
-const knexfile = require('../../knexfile');
 
-const env = process.env.NODE_ENV || 'development';
-const config = knexfile[env];
+const config = {
+  client: 'pg',
+  connection: {
+    host    : process.env.PG_HOST,
+    port    : process.env.PG_PORT,
+    user    : process.env.PG_USER,
+    password: process.env.PG_PASSWORD,
+    database: process.env.PG_DATABASE,
+  },
+  migrations: {
+    directory: './migrations',
+  },
+  seeds: {
+    directory: './seeds',
+  },
+};
 
 module.exports = knex(config);
