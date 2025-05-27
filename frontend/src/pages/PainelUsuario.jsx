@@ -95,23 +95,32 @@ const PainelUsuario = () => {
                   : "Não informada"}
               </p>
 
-              <div className="flex justify-between mt-4">
-                <Link to={`/detalhes/${post.id}`} className="text-blue-600 hover:underline">
-                  Visualizar
-                </Link>
-                <button
-                  onClick={() => navigate(`/editar/${post.id}`)}
-                  className="text-green-600 hover:underline"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => handleDelete(post.id)}
-                  className="text-red-600 hover:underline"
-                >
-                  Excluir
-                </button>
-              </div>
+              <details className="mt-4 w-full">
+  <summary className="cursor-pointer text-sm text-gray-700 hover:text-black">
+    ⚙️ Ações
+  </summary>
+  <div className="mt-2 flex flex-col gap-1 text-sm pl-2">
+    <Link to={`/detalhes/${post.id}`} className="text-blue-600 hover:underline">
+      🔍 Visualizar
+    </Link>
+    <button
+      onClick={() => navigate(`/editar/${post.id}`)}
+      className="text-green-600 hover:underline text-left"
+    >
+      ✏️ Editar
+    </button>
+    <button
+      onClick={() => handleDelete(post.id)}
+      className="text-red-600 hover:underline text-left"
+    >
+      🗑️ Excluir
+    </button>
+    <Link to={`/mensagens/${post.id}`} className="text-purple-600 hover:underline">
+      💬 Conversas
+    </Link>
+  </div>
+</details>
+
             </div>
           ))}
         </div>

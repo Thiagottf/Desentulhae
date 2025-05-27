@@ -42,17 +42,26 @@ const DetalhesBlog = () => {
       >
         Voltar
       </button>
-      <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
-      {post.image && (
+      <h1 className="text-3xl font-bold mb-2">{post.title}</h1>
+
+      {post.excerpt && (
+        <p className="text-gray-600 italic mb-4">{post.excerpt}</p>
+      )}
+
+      {post.image_url && (
         <img
-          src={post.image}
+          src={post.image_url}
           alt={post.title}
           className="w-full h-64 object-cover rounded mb-4"
         />
       )}
-      <p className="text-gray-700 mb-4">{post.content}</p>
+
+        <p className="text-gray-700 mb-4 whitespace-pre-line">
+          {post.content}
+        </p>
+
       <p className="text-gray-500 text-sm">
-        Publicado em: {new Date(post.date).toLocaleString()}
+        Publicado em: {new Date(post.created_at).toLocaleString()}
       </p>
     </div>
   );
