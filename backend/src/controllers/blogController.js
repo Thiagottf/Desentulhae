@@ -28,9 +28,6 @@ exports.show = async (req, res, next) => {
   }
 };
 
-
-
-
 exports.create = async (req, res, next) => {
   try {
     const { title, excerpt, content, image } = req.body;
