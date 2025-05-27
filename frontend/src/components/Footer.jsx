@@ -9,10 +9,10 @@ const Footer = () => {
         </p>
         <div className="flex gap-4">
           <Link to="/termos" className="hover:underline hover:text-primary">
-            Termos de Uso
+            Termos de Uso.
           </Link>
           <Link to="/privacidade" className="hover:underline hover:text-primary">
-            Política de Privacidade
+            Política de Privacidade.
           </Link>
           <Link to="/contato" className="hover:underline hover:text-primary">
             Contato
