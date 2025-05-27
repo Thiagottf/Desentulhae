@@ -1,7 +1,7 @@
 import { FaUser, FaLock } from "react-icons/fa"
 import { useNavigate } from "react-router-dom"
 import { useState } from "react"
-import Input from "../components/input"
+import Input from "../components/Input"
 import background from "../assets/CaminhaoDeEntulho.jpg"
 import { useAuth } from "../contexts/useAuth"
 
