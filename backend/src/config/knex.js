@@ -1,3 +1,6 @@
+require('dotenv').config();
+const knex = require('knex');
+
 const config = {
   client: 'pg',
   connection: {
@@ -15,3 +18,6 @@ const config = {
     directory: './seeds',
   },
 };
+
+
+module.exports = knex(config);
