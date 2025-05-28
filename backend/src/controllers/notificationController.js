@@ -1,4 +1,4 @@
-const db = require('../config/db');
+const db = require('../config/knex');
 
 const listar = async (req, res, next) => {
   try {

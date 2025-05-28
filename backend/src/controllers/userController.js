@@ -1,5 +1,5 @@
 // src/controllers/userController.js
-const db = require('../config/db')
+const db = require("../config/knex")
 
 exports.list = async (req, res, next) => {
   try {
