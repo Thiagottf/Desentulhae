@@ -5,12 +5,11 @@ import Input from "../components/Input"
 import background from "../assets/CaminhaoDeEntulho.jpg"
 import { useAuth } from "../contexts/useAuth"
 
-
 const Login = () => {
   const navigate = useNavigate()
   const { login } = useAuth()
 
-  const [cpf, setCpf] = useState("")
+  const [email, setEmail] = useState("")
   const [senha, setSenha] = useState("")
   const [remember, setRemember] = useState(false)
   const [errorField, setErrorField] = useState(null)
@@ -22,12 +21,10 @@ const Login = () => {
     setErrorMessage("")
 
     try {
-      // Chama o login passando cpf, senha e remember
-      await login({ cpf, senha, remember })
+      await login({ email, senha, remember })
       navigate('/home')
     } catch (err) {
-      // Destaca o campo CPF em caso de erro e mostra a mensagem
-      setErrorField('cpf')
+      setErrorField('email')
       setErrorMessage(err.message || 'Credenciais inválidas.')
     }
   }
@@ -52,13 +49,13 @@ const Login = () => {
 
           <div className="relative mb-5">
             <Input
-              type="text"
-              name="cpf"
-              placeholder="CPF"
+              type="email"
+              name="email"
+              placeholder="E-mail"
               required
-              value={cpf}
-              onChange={(e) => { setCpf(e.target.value); if (errorField === 'cpf') setErrorField(null) }}
-              className={inputClass('cpf')}
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); if (errorField === 'email') setErrorField(null) }}
+              className={inputClass('email')}
             />
             <FaUser className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white" />
           </div>

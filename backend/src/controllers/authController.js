@@ -57,15 +57,15 @@ async function register(req, res) {
 
 // Login
 async function login(req, res) {
-  const { email, cpf, senha } = req.body
+  const { email, senha } = req.body
 
   try {
-    // Busca por email ou cpf
+    if (!email || !senha) {
+      return res.status(400).json({ error: 'E-mail e senha são obrigatórios' })
+    }
+
     const user = await db('usuario')
-      .where(function () {
-        if (email) this.where('email', email)
-        if (cpf) this.orWhere('cpf', cpf)
-      })
+      .where({ email })
       .first()
 
     if (!user) {
@@ -93,6 +93,7 @@ async function login(req, res) {
     return res.status(500).json({ error: 'Erro interno do servidor', detalhes: err.message })
   }
 }
+
 
 module.exports = {
   register,
