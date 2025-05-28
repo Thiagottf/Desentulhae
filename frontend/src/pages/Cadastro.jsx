@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Input from '../components/Input';
-import { api } from '../services/api';
+import  api  from '../services/api';
 
 const Cadastro = () => {
   const navigate = useNavigate();
