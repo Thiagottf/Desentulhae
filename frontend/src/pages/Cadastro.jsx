@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Input from '../components/Input';
 import  api  from '../services/api';
+import background from "../assets/CaminhaoDeEntulho.jpg"
 
 const Cadastro = () => {
   const navigate = useNavigate();
@@ -57,7 +58,10 @@ const Cadastro = () => {
     } text-white`;
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-900 text-white">
+    <div
+          className="flex justify-center items-center h-screen bg-center bg-cover"
+          style={{ backgroundImage: `url(${background})` }}
+        >
       <div className="w-full max-w-lg bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-8 shadow-lg">
         <h1 className="text-3xl font-bold text-center mb-6">Cadastro</h1>
 
