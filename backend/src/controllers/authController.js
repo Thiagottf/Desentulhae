@@ -44,8 +44,9 @@ async function register(req, res) {
       email,
       senha_hash,
       data_registro: db.fn.now(),
-      role: 'cliente'
+      role: 'user'
     })
+
 
     return res.status(201).json({ message: 'Usuário cadastrado com sucesso' })
   } catch (err) {
