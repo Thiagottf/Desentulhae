@@ -1,5 +1,5 @@
 // src/controllers/entulhoController.js
-const db = require('../config/db');
+const db = require('../config/knex');
 
 exports.index = async (req, res, next) => {
   try {
