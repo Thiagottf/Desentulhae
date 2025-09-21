@@ -4,14 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
     "migrate:dev": "knex migrate:latest --env development",
     "seed:dev": "knex seed:run --env development",
     "migrate:prod": "knex migrate:latest --env production",
     "seed:prod": "knex seed:run --env production"
-  }
-,
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
