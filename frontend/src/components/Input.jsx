@@ -9,7 +9,7 @@ const Input = ({ type, placeholder, value, onChange, required, name, className, 
       value={value}
       onChange={onChange}
       required={required}
-      className={`w-full p-3 rounded-lg bg-transparent border border-white/30 placeholder-white text-white focus:outline-none ${className}`}
+      className={`w-full p-3 rounded-lg bg-transparent focus:outline-none ${className}`}
       {...rest}
     />
   )
